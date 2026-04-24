@@ -12,6 +12,9 @@ import jax
 import jax.numpy as jnp
 
 
+BAYESIAN_TEMPERATURE = 1.0 / 64.0
+
+
 class ParameterGrid(NamedTuple):
     """Parameter values to sweep for one algorithm."""
 
@@ -46,7 +49,7 @@ class StudyArtifactPaths(NamedTuple):
 
 
 def default_parameter_grids() -> tuple[ParameterGrid, ...]:
-    """Return Sutton/Barto-style parameter grids plus the Bayesian temperature sweep."""
+    """Return Sutton/Barto-style parameter grids plus the Bayesian kappa sweep."""
 
     return (
         ParameterGrid(
@@ -71,7 +74,7 @@ def default_parameter_grids() -> tuple[ParameterGrid, ...]:
         ),
         ParameterGrid(
             algorithm="Bayesian P(best)",
-            parameter_name="temperature",
+            parameter_name="kappa",
             values=2.0 ** jnp.arange(-7, 3, dtype=jnp.float32),
         ),
     )
@@ -254,7 +257,7 @@ def _simulate_bayesian_parameter(
     key: jax.Array,
     true_means: jax.Array,
     true_sigmas: jax.Array,
-    temperature: jax.Array,
+    kappa: jax.Array,
     steps: int,
     prior_alpha: float = 2.0,
     prior_beta: float = 2.0,
@@ -262,8 +265,8 @@ def _simulate_bayesian_parameter(
     runs, houses = true_means.shape
     dtype = true_means.dtype
     prior_mu = jnp.asarray(0.0, dtype=dtype)
-    kappa = jnp.asarray(1.0, dtype=dtype)
-    temperature = jnp.maximum(jnp.asarray(temperature, dtype=dtype), jnp.finfo(dtype).eps)
+    kappa = jnp.asarray(kappa, dtype=dtype)
+    temperature = jnp.asarray(BAYESIAN_TEMPERATURE, dtype=dtype)
     prior_alpha_value = jnp.asarray(prior_alpha, dtype=dtype)
     prior_beta_value = jnp.asarray(prior_beta, dtype=dtype)
     initial_counts = jnp.zeros((runs, houses), dtype=dtype)

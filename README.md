@@ -12,7 +12,7 @@ Each different pizza house has a different $\mu_k$ and $\sigma_k$
 
 we want to train a model that predicts the probability distribution for each pizza house.
 
-For each pizza house \(k\), let
+For each pizza house $k$, let
 
 $$
 D_k = \{r_{k,1}, \dots, r_{k,n_k}\}
@@ -20,19 +20,19 @@ $$
 
 be the set of observed scores collected so far.
 
-We assume that scores from pizza house \(k\) are generated from a Gaussian distribution with unknown parameters:
+We assume that scores from pizza house $k$ are generated from a Gaussian distribution with unknown parameters:
 
 $$
 r_{k,i} \mid \mu_k, \sigma_k^2 \sim \mathcal N(\mu_k, \sigma_k^2).
 $$
 
-Given the past observations \(D_k\), the model does not directly estimate a single pair \((\mu_k, \sigma_k^2)\), but instead infers a posterior distribution over these latent parameters:
+Given the past observations $D_k$, the model does not directly estimate a single pair $(\mu_k, \sigma_k^2)$, but instead infers a posterior distribution over these latent parameters:
 
 $$
 p(\mu_k, \sigma_k^2 \mid D_k).
 $$
 
-This posterior captures our uncertainty about the true quality distribution of pizza house \(k\).
+This posterior captures our uncertainty about the true quality distribution of pizza house $k$.
 
 From it, we can derive the posterior predictive distribution for the next score:
 
@@ -107,7 +107,7 @@ $$
 I\big(r;(\mu_k,\sigma_k^2)\mid D_k\big)
 $$
 
-is the **epistemic** or **reducible** uncertainty. It comes from not yet knowing the true values of \(\mu_k\) and \(\sigma_k^2\). As more scores are collected from house \(k\), this term decreases.
+is the **epistemic** or **reducible** uncertainty. It comes from not yet knowing the true values of $\mu_k$ and $\sigma_k^2$. As more scores are collected from house $k$, this term decreases.
 
 For a Gaussian likelihood with known parameters,
 
@@ -129,8 +129,8 @@ $$
 
 This is often the most intuitive way to think about the exploration problem:
 
-- \(\mathbb E[\sigma_k^2 \mid D_k]\) is the average within-house noise in pizza ratings;
-- \(\mathrm{Var}(\mu_k \mid D_k)\) is uncertainty about the house's true average quality.
+- $\mathbb E[\sigma_k^2 \mid D_k]$ is the average within-house noise in pizza ratings;
+- $\mathrm{Var}(\mu_k \mid D_k)$ is uncertainty about the house's true average quality.
 
 As the model learns, the second term goes down, while the first one generally does not. This is exactly the distinction between uncertainty that can be reduced by gathering more data and uncertainty that is intrinsic to the reward-generating process.
 
@@ -138,14 +138,14 @@ As the model learns, the second term goes down, while the first one generally do
 
 The quantity we ultimately care about is not the next noisy reward itself, but which pizza house has the largest **latent mean reward**.
 
-For each house \(k\), we can first marginalise out the uncertainty over the variance and obtain the posterior distribution of the mean:
+For each house $k$, we can first marginalise out the uncertainty over the variance and obtain the posterior distribution of the mean:
 
 $$
 p(\mu_k \mid D_k)=
 \int p(\mu_k, \sigma_k^2 \mid D_k)\, d\sigma_k^2.
 $$
 
-This posterior describes our belief about the true average quality of pizza house \(k\).
+This posterior describes our belief about the true average quality of pizza house $k$.
 
 Now let
 
@@ -155,20 +155,20 @@ $$
 
 denote the index of the truly best pizza house, that is, the house with the largest latent mean reward.
 
-The posterior probability that house \(k\) is the best is then
+The posterior probability that house $k$ is the best is then
 
 $$
 \mathbb P(k^\star = k \mid D)=
 \mathbb P(\mu_k \ge \mu_j \ \forall j \neq k \mid D),
 $$
 
-where \(D = (D_1,\dots,D_K)\) denotes all observations collected so far.
+where $D = (D_1,\dots,D_K)$ denotes all observations collected so far.
 
 Equivalently, this can be written as
 
 $$
 \mathbb P(k^\star = k \mid D)=
-\int \mathbf 1\!\left\{\mu_k = \max_{j} \mu_j\right\}
+\int \mathbf 1\!\{\mu_k = \max_{j} \mu_j\}
 \; p(\mu_1,\dots,\mu_K \mid D)\;
 d\mu_1 \cdots d\mu_K.
 $$
@@ -184,16 +184,16 @@ and therefore
 
 $$
 \mathbb P(k^\star = k \mid D)=
-\int \mathbf 1\!\left\{\mu_k = \max_{j} \mu_j\right\}
+\int \mathbf 1\!\{\mu_k = \max_{j} \mu_j\}
 \prod_{j=1}^{K} p(\mu_j \mid D_j)\,
 d\mu_1 \cdots d\mu_K.
 $$
 
-This is a best-focused quantity: it does not ask whether house \(k\) can generate a high reward on a single noisy draw, but whether its **true mean quality** is the highest among all houses.
+This is a best-focused quantity: it does not ask whether house $k$ can generate a high reward on a single noisy draw, but whether its **true mean quality** is the highest among all houses.
 
 In practice, this probability can be estimated by Monte Carlo:
 
-1. for each posterior sample \(s = 1,\dots,S\), draw
+1. for each posterior sample $s = 1,\dots,S$, draw
 
 $$
 \mu_j^{(s)} \sim p(\mu_j \mid D_j)
@@ -212,7 +212,7 @@ $$
 \widehat{\mathbb P}(k^\star = k \mid D)=
 \frac{1}{S}
 \sum_{s=1}^{S}
-\mathbf 1\!\left\{k^{\star (s)} = k\right\}.
+\mathbf 1\!\{k^{\star (s)} = k\}.
 $$
 
 The current best recommendation is then naturally
@@ -228,7 +228,7 @@ This gives a clean objective for best-house identification: recommend the pizza 
 
 The Monte Carlo estimator above is simple and general, but in this setting we can often avoid sampling altogether.
 
-If the posterior over latent means factorises across houses, then the probability that house \(k\) is the best can be reduced to a **one-dimensional integral**:
+If the posterior over latent means factorises across houses, then the probability that house $k$ is the best can be reduced to a **one-dimensional integral**:
 
 $$
 \mathbb P(k^\star = k \mid D)=
@@ -251,12 +251,12 @@ $$
 \int f_k(x)\prod_{j\neq k} F_j(x)\,dx.
 $$
 
-This is called a 1D quadrature formulation because, instead of sampling many posterior worlds, we only need to numerically integrate over a single scalar variable \(x\), interpreted as a candidate value for the latent mean of house \(k\).
+This is called a 1D quadrature formulation because, instead of sampling many posterior worlds, we only need to numerically integrate over a single scalar variable $x$, interpreted as a candidate value for the latent mean of house $k$.
 
 This formulation relies on the following assumptions:
 
-1. the quantity used to rank houses is a single scalar latent variable, here the true mean reward \(\mu_k\);
-2. each house has a posterior distribution over that scalar, so we can evaluate its density \(f_k\) and cumulative distribution function \(F_k\);
+1. the quantity used to rank houses is a single scalar latent variable, here the true mean reward $\mu_k$;
+2. each house has a posterior distribution over that scalar, so we can evaluate its density $f_k$ and cumulative distribution function $F_k$;
 3. the joint posterior over houses factorises across houses:
 
 $$
@@ -268,13 +268,13 @@ $$
 
 Under these assumptions, the interpretation is simple:
 
-- choose a possible value \(x\) for the latent mean of house \(k\);
-- weight it by how plausible that value is under the posterior of house \(k\);
-- multiply by the probability that every other house has latent mean below \(x\);
-- integrate over all possible values of \(x\).
+- choose a possible value $x$ for the latent mean of house $k$;
+- weight it by how plausible that value is under the posterior of house $k$;
+- multiply by the probability that every other house has latent mean below $x$;
+- integrate over all possible values of $x$.
 
 Importantly, this does **not** require the uncertainty to be isotropic or the variances to be equal across houses. Each house may have a different posterior spread.
 
-For example, if \(p(\mu_k \mid D_k)\) is Gaussian or Student-\(t\), the 1D quadrature formula still applies. In general, this does not lead to a closed-form expression for \(K > 2\), but it remains a deterministic one-dimensional numerical integration problem rather than a Monte Carlo estimation problem.
+For example, if $p(\mu_k \mid D_k)$ is Gaussian or Student-$t$, the 1D quadrature formula still applies. In general, this does not lead to a closed-form expression for $K > 2$, but it remains a deterministic one-dimensional numerical integration problem rather than a Monte Carlo estimation problem.
 
-By contrast, some special families such as independent Gumbel posteriors with a **common** scale parameter do admit a closed-form expression for the probability of being best. However, once the scale differs across houses, that simplification no longer holds. For the pizza-house model, keeping the natural Gaussian or Student-\(t\) posteriors and using 1D quadrature is typically the most faithful approach.
+By contrast, some special families such as independent Gumbel posteriors with a **common** scale parameter do admit a closed-form expression for the probability of being best. However, once the scale differs across houses, that simplification no longer holds. For the pizza-house model, keeping the natural Gaussian or Student-$t$ posteriors and using 1D quadrature is typically the most faithful approach.
