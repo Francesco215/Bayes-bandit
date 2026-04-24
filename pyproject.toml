@@ -1,0 +1,27 @@
+[project]
+name = "Where-is-the-best-pizza-house"
+version = "0.1.0"
+description = "A bayesian way of finding where is the best pizza house"
+readme = "README.md"
+requires-python = "==3.11.*"
+dependencies = [
+    "einops",
+    "jax",
+    "matplotlib",
+    "tqdm",
+    "wandb",
+    "array-record>=0.8.3",
+    "grain>=0.2.15",
+    "ipykernel>=7.1.0",
+]
+
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.uv.sources]
+optax = { git = "https://github.com/google-deepmind/optax.git" }
+
+[tool.setuptools]
+package-dir = {"" = "."}
