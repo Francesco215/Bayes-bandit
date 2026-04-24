@@ -2,4 +2,8 @@
 
 **/__pycache__/
 **
+!src/
+!src/parameter_study.py
+!tests/
+!tests/test_parameter_study.py
 uv.lock
