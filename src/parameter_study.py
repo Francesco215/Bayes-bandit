@@ -6,13 +6,15 @@ import csv
 import os
 from functools import partial
 from pathlib import Path
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 
 BAYESIAN_TEMPERATURE = 1.0 / 64.0
+BayesianSweep = Literal["kappa", "temperature"]
+_VALID_BAYESIAN_SWEEPS = {"kappa", "temperature"}
 
 
 class ParameterGrid(NamedTuple):
@@ -48,9 +50,11 @@ class StudyArtifactPaths(NamedTuple):
     plot_path: Path
 
 
-def default_parameter_grids() -> tuple[ParameterGrid, ...]:
-    """Return Sutton/Barto-style parameter grids plus the Bayesian kappa sweep."""
+def default_parameter_grids(bayesian_sweep: BayesianSweep = "kappa") -> tuple[ParameterGrid, ...]:
+    """Return Sutton/Barto-style parameter grids plus the configured Bayesian sweep."""
 
+    if bayesian_sweep not in _VALID_BAYESIAN_SWEEPS:
+        raise ValueError("bayesian_sweep must be either 'kappa' or 'temperature'")
     return (
         ParameterGrid(
             algorithm="epsilon-greedy",
@@ -74,7 +78,7 @@ def default_parameter_grids() -> tuple[ParameterGrid, ...]:
         ),
         ParameterGrid(
             algorithm="Bayesian P(best)",
-            parameter_name="kappa",
+            parameter_name=bayesian_sweep,
             values=2.0 ** jnp.arange(-7, 3, dtype=jnp.float32),
         ),
     )
@@ -257,16 +261,27 @@ def _simulate_bayesian_parameter(
     key: jax.Array,
     true_means: jax.Array,
     true_sigmas: jax.Array,
-    kappa: jax.Array,
+    parameter: jax.Array,
     steps: int,
+    sweep: BayesianSweep,
+    fixed_kappa: jax.Array,
+    fixed_temperature: jax.Array,
     prior_alpha: float = 2.0,
     prior_beta: float = 2.0,
 ) -> jax.Array:
     runs, houses = true_means.shape
     dtype = true_means.dtype
     prior_mu = jnp.asarray(0.0, dtype=dtype)
-    kappa = jnp.asarray(kappa, dtype=dtype)
-    temperature = jnp.asarray(BAYESIAN_TEMPERATURE, dtype=dtype)
+    parameter = jnp.asarray(parameter, dtype=dtype)
+    fixed_kappa = jnp.asarray(fixed_kappa, dtype=dtype)
+    fixed_temperature = jnp.asarray(fixed_temperature, dtype=dtype)
+    if sweep == "kappa":
+        kappa = parameter
+        temperature = fixed_temperature
+    else:
+        kappa = fixed_kappa
+        temperature = parameter
+    temperature = jnp.maximum(temperature, jnp.finfo(dtype).eps)
     prior_alpha_value = jnp.asarray(prior_alpha, dtype=dtype)
     prior_beta_value = jnp.asarray(prior_beta, dtype=dtype)
     initial_counts = jnp.zeros((runs, houses), dtype=dtype)
@@ -375,22 +390,30 @@ def _optimistic_curve(
     )
 
 
-@partial(jax.jit, static_argnames=("steps",))
+@partial(jax.jit, static_argnames=("steps", "sweep"))
 def _bayesian_curve(
     key: jax.Array,
     true_means: jax.Array,
     true_sigmas: jax.Array,
     parameters: jax.Array,
     steps: int,
+    sweep: BayesianSweep,
+    fixed_kappa: float,
+    fixed_temperature: float,
 ) -> jax.Array:
     keys = jax.random.split(key, parameters.shape[0])
-    return jax.vmap(_simulate_bayesian_parameter, in_axes=(0, None, None, 0, None))(
-        keys,
-        true_means,
-        true_sigmas,
-        parameters,
-        steps,
-    )
+    return jax.vmap(
+        lambda parameter_key, parameter: _simulate_bayesian_parameter(
+            parameter_key,
+            true_means,
+            true_sigmas,
+            parameter,
+            steps,
+            sweep,
+            fixed_kappa,
+            fixed_temperature,
+        )
+    )(keys, parameters)
 
 
 def run_parameter_study(
@@ -401,8 +424,18 @@ def run_parameter_study(
     mean_scale: float = 1.0,
     min_sigma: float = 0.5,
     max_sigma: float = 1.5,
+    bayesian_sweep: BayesianSweep = "kappa",
+    bayesian_fixed_kappa: float = 1.0,
+    bayesian_fixed_temperature: float = BAYESIAN_TEMPERATURE,
 ) -> ParameterStudyResult:
     """Run a normalized pizza-house parameter study."""
+
+    if bayesian_sweep not in _VALID_BAYESIAN_SWEEPS:
+        raise ValueError("bayesian_sweep must be either 'kappa' or 'temperature'")
+    if bayesian_fixed_kappa <= 0.0:
+        raise ValueError("bayesian_fixed_kappa must be positive")
+    if bayesian_fixed_temperature <= 0.0:
+        raise ValueError("bayesian_fixed_temperature must be positive")
 
     environment_key, epsilon_key, ucb_key, gradient_key, optimistic_key, bayesian_key = jax.random.split(
         key,
@@ -417,7 +450,7 @@ def run_parameter_study(
         max_sigma=max_sigma,
     )
 
-    grids = {grid.algorithm: grid for grid in default_parameter_grids()}
+    grids = {grid.algorithm: grid for grid in default_parameter_grids(bayesian_sweep)}
     curves = (
         StudyCurve(
             algorithm=grids["epsilon-greedy"].algorithm,
@@ -477,6 +510,9 @@ def run_parameter_study(
                 true_sigmas,
                 grids["Bayesian P(best)"].values,
                 steps,
+                bayesian_sweep,
+                bayesian_fixed_kappa,
+                bayesian_fixed_temperature,
             ),
         ),
     )

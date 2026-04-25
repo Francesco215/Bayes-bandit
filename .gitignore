@@ -2,6 +2,8 @@
 
 **/__pycache__/
 **
+!conf/
+!conf/config.yaml
 !src/
 !src/parameter_study.py
 !tests/

@@ -1,0 +1,39 @@
+defaults:
+  - override hydra/job_logging: disabled
+  - override hydra/hydra_logging: disabled
+  - _self_
+
+mode: demo
+
+demo:
+  houses: 6
+  orders: 200
+  seed: 0
+  method: quadrature
+  mc_samples: 10000
+  grid_points: 2048
+  prior:
+    mu: 7.0
+    kappa: 0.25
+    alpha: 2.0
+    beta: 2.0
+
+study:
+  runs: 2000
+  steps: 1000
+  houses: 10
+  seed: 0
+  output_dir: outputs
+  mean_scale: 1.0
+  min_sigma: 0.5
+  max_sigma: 1.5
+  bayesian_sweep: kappa
+  bayesian_fixed_kappa: 1.0
+  bayesian_fixed_temperature: 0.015625
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job:
+    chdir: false
