@@ -46,6 +46,7 @@ $$
 p(r \mid D_k)=
 \int p(r \mid \mu_k, \sigma_k^2)\, p(\mu_k, \sigma_k^2 \mid D_k)\, d\mu_k\, d\sigma_k^2,
 $$
+
 However, the quantity we ultimately care about is not just the next noisy reward. We care about which arm has the largest expected reward:
 
 $$
