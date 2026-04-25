@@ -29,13 +29,13 @@ The latent mean $\mu_k$ is the true expected reward of arm $k$. The latent varia
 The environment used in the parameter study samples the true values independently:
 
 $$
-\mu_k \sim \mathcal N(0,\texttt{mean\_scale}^2),
+\mu_k \sim \mathcal N(0,\texttt{mean scale}^2),
 $$
 
 and
 
 $$
-\sigma_k \sim \mathrm{Uniform}(\texttt{min\_sigma},\texttt{max\_sigma}).
+\sigma_k \sim \mathrm{Uniform}(\texttt{min sigma},\texttt{max sigma}).
 $$
 
 The algorithms do not observe $\mu_k$ or $\sigma_k$. They only observe rewards from selected arms.
@@ -368,7 +368,7 @@ Here $T$ is the configured `temperature`.
 As $T\to 0$, the softmax becomes nearly greedy:
 
 $$
-\pi(k\mid D) \approx \mathbf 1\left\{k=\arg\max_j \tilde\mu_j\right\}.
+\pi(k\mid D) \approx \mathbf 1\{k=\arg\max_j \tilde\mu_j\}.
 $$
 
 This is essentially Thompson sampling over latent means. Since:
@@ -504,7 +504,7 @@ This measures how much reward the agent earned while learning.
 A different metric would be final recommendation accuracy:
 
 $$
-\mathbf 1\left\{\hat k_T = k^\star\right\},
+\mathbf 1\{\hat k_T = k^\star \},
 $$
 
 where:
