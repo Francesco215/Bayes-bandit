@@ -4,6 +4,8 @@
 **
 !conf/
 !conf/config.yaml
+!math.md
+!reward_distributions_palette.png
 !src/
 !src/parameter_study.py
 !tests/

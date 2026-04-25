@@ -31,14 +31,32 @@ class ParameterStudyTest(unittest.TestCase):
         self.assertAlmostEqual(float(bayesian_grid.values[0]), 1.0 / 128.0)
         self.assertAlmostEqual(float(bayesian_grid.values[-1]), 4.0)
 
-    def test_temperature_sweep_grid(self) -> None:
-        grids = default_parameter_grids("temperature")
+    def test_bayesian_sweep_grids(self) -> None:
+        for sweep in ("temperature", "alpha", "beta"):
+            with self.subTest(sweep=sweep):
+                grids = default_parameter_grids(sweep)
+                bayesian_grid = grids[-1]
+
+                self.assertEqual(bayesian_grid.algorithm, "Bayesian P(best)")
+                self.assertEqual(bayesian_grid.parameter_name, sweep)
+                self.assertAlmostEqual(float(bayesian_grid.values[0]), 1.0 / 128.0)
+                self.assertAlmostEqual(float(bayesian_grid.values[-1]), 4.0)
+
+    def test_bayesian_sweep_grid_bounds_are_configurable(self) -> None:
+        grids = default_parameter_grids(
+            "alpha",
+            bayesian_sweep_min_exponent=-3,
+            bayesian_sweep_max_exponent=1,
+        )
         bayesian_grid = grids[-1]
 
-        self.assertEqual(bayesian_grid.algorithm, "Bayesian P(best)")
-        self.assertEqual(bayesian_grid.parameter_name, "temperature")
-        self.assertAlmostEqual(float(bayesian_grid.values[0]), 1.0 / 128.0)
-        self.assertAlmostEqual(float(bayesian_grid.values[-1]), 4.0)
+        self.assertEqual(bayesian_grid.parameter_name, "alpha")
+        self.assertTrue(
+            jnp.allclose(
+                bayesian_grid.values,
+                jnp.array([1.0 / 8.0, 1.0 / 4.0, 1.0 / 2.0, 1.0, 2.0]),
+            )
+        )
 
     def test_parameter_study_shapes_and_finite_rewards(self) -> None:
         result = run_parameter_study(
@@ -60,20 +78,25 @@ class ParameterStudyTest(unittest.TestCase):
             self.assertEqual(curve.average_rewards.shape, grid.values.shape)
             self.assertTrue(jnp.all(jnp.isfinite(curve.average_rewards)))
 
-    def test_parameter_study_supports_temperature_sweep(self) -> None:
-        result = run_parameter_study(
-            key=jax.random.PRNGKey(2),
-            runs=2,
-            steps=3,
-            houses=3,
-            bayesian_sweep="temperature",
-            bayesian_fixed_kappa=1.0,
-        )
-        bayesian_curve = result.curves[-1]
+    def test_parameter_study_supports_bayesian_sweeps(self) -> None:
+        for sweep in ("temperature", "alpha", "beta"):
+            with self.subTest(sweep=sweep):
+                result = run_parameter_study(
+                    key=jax.random.PRNGKey(2),
+                    runs=2,
+                    steps=3,
+                    houses=3,
+                    bayesian_sweep=sweep,
+                    bayesian_fixed_kappa=1.0,
+                    bayesian_sweep_min_exponent=-3,
+                    bayesian_sweep_max_exponent=-1,
+                )
+                bayesian_curve = result.curves[-1]
 
-        self.assertEqual(bayesian_curve.algorithm, "Bayesian P(best)")
-        self.assertEqual(bayesian_curve.parameter_name, "temperature")
-        self.assertTrue(jnp.all(jnp.isfinite(bayesian_curve.average_rewards)))
+                self.assertEqual(bayesian_curve.algorithm, "Bayesian P(best)")
+                self.assertEqual(bayesian_curve.parameter_name, sweep)
+                self.assertEqual(bayesian_curve.parameter_values.shape, (3,))
+                self.assertTrue(jnp.all(jnp.isfinite(bayesian_curve.average_rewards)))
 
     def test_save_parameter_study_writes_png_and_csv(self) -> None:
         result = run_parameter_study(

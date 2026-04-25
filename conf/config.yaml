@@ -7,7 +7,7 @@ mode: demo
 
 demo:
   houses: 6
-  orders: 200
+  orders: 2000
   seed: 0
   output_dir: outputs
   method: quadrature
@@ -16,11 +16,11 @@ demo:
   prior:
     mu: 0.0
     kappa: 0.25
-    alpha: 2.0
+    alpha: 4.0
     beta: 2.0
 
 study:
-  runs: 2000
+  runs: 200
   steps: 1000
   houses: 10
   seed: 0
@@ -31,6 +31,11 @@ study:
   bayesian_sweep: kappa
   bayesian_fixed_kappa: 1.0
   bayesian_fixed_temperature: 0.015625
+  bayesian_fixed_alpha: 4.0
+  bayesian_fixed_beta: 2.0
+  # Bayesian sweep values are powers of two: 2^min, ..., 2^max.
+  bayesian_sweep_min_exponent: -3
+  bayesian_sweep_max_exponent: 4
 
 hydra:
   run:

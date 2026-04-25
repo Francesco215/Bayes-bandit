@@ -14,7 +14,7 @@ class NormalInverseGammaPrior(NamedTuple):
 
     mu: float = 7.0
     kappa: float = 0.25
-    alpha: float = 2.0
+    alpha: float = 4.0
     beta: float = 2.0
 
 

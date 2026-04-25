@@ -111,12 +111,18 @@ def validate_study_config(cfg: DictConfig) -> None:
         raise ValueError("study.min_sigma must be positive")
     if cfg.max_sigma <= cfg.min_sigma:
         raise ValueError("study.max_sigma must be greater than study.min_sigma")
-    if cfg.bayesian_sweep not in {"kappa", "temperature"}:
-        raise ValueError("study.bayesian_sweep must be either 'kappa' or 'temperature'")
+    if cfg.bayesian_sweep not in {"kappa", "temperature", "alpha", "beta"}:
+        raise ValueError("study.bayesian_sweep must be one of: kappa, temperature, alpha, beta")
     if cfg.bayesian_fixed_kappa <= 0.0:
         raise ValueError("study.bayesian_fixed_kappa must be positive")
     if cfg.bayesian_fixed_temperature <= 0.0:
         raise ValueError("study.bayesian_fixed_temperature must be positive")
+    if cfg.bayesian_fixed_alpha <= 0.0:
+        raise ValueError("study.bayesian_fixed_alpha must be positive")
+    if cfg.bayesian_fixed_beta <= 0.0:
+        raise ValueError("study.bayesian_fixed_beta must be positive")
+    if cfg.bayesian_sweep_max_exponent < cfg.bayesian_sweep_min_exponent:
+        raise ValueError("study.bayesian_sweep_max_exponent must be >= bayesian_sweep_min_exponent")
 
 
 def print_study_summary(result: ParameterStudyResult, output_dir: Path) -> None:
@@ -149,6 +155,10 @@ def run_study(cfg: DictConfig) -> None:
         bayesian_sweep=cfg.bayesian_sweep,
         bayesian_fixed_kappa=cfg.bayesian_fixed_kappa,
         bayesian_fixed_temperature=cfg.bayesian_fixed_temperature,
+        bayesian_fixed_alpha=cfg.bayesian_fixed_alpha,
+        bayesian_fixed_beta=cfg.bayesian_fixed_beta,
+        bayesian_sweep_min_exponent=cfg.bayesian_sweep_min_exponent,
+        bayesian_sweep_max_exponent=cfg.bayesian_sweep_max_exponent,
     )
     artifacts = save_parameter_study(result, output_dir)
     print_study_summary(result, output_dir)

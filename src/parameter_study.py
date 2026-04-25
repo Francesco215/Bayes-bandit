@@ -6,6 +6,7 @@ import csv
 import os
 from functools import partial
 from pathlib import Path
+from shutil import which
 from typing import Literal, NamedTuple
 
 import jax
@@ -13,8 +14,9 @@ import jax.numpy as jnp
 
 
 BAYESIAN_TEMPERATURE = 1.0 / 64.0
-BayesianSweep = Literal["kappa", "temperature"]
-_VALID_BAYESIAN_SWEEPS = {"kappa", "temperature"}
+BayesianSweep = Literal["kappa", "temperature", "alpha", "beta"]
+_VALID_BAYESIAN_SWEEPS = {"kappa", "temperature", "alpha", "beta"}
+_BAYESIAN_SWEEP_ERROR = "bayesian_sweep must be one of: kappa, temperature, alpha, beta"
 
 
 class ParameterGrid(NamedTuple):
@@ -53,11 +55,23 @@ class StudyArtifactPaths(NamedTuple):
     reward_distribution_path: Path
 
 
-def default_parameter_grids(bayesian_sweep: BayesianSweep = "kappa") -> tuple[ParameterGrid, ...]:
+def default_parameter_grids(
+    bayesian_sweep: BayesianSweep = "kappa",
+    bayesian_sweep_min_exponent: int = -7,
+    bayesian_sweep_max_exponent: int = 2,
+) -> tuple[ParameterGrid, ...]:
     """Return Sutton/Barto-style parameter grids plus the configured Bayesian sweep."""
 
     if bayesian_sweep not in _VALID_BAYESIAN_SWEEPS:
-        raise ValueError("bayesian_sweep must be either 'kappa' or 'temperature'")
+        raise ValueError(_BAYESIAN_SWEEP_ERROR)
+    if bayesian_sweep_max_exponent < bayesian_sweep_min_exponent:
+        raise ValueError("bayesian_sweep_max_exponent must be >= bayesian_sweep_min_exponent")
+
+    bayesian_values = 2.0 ** jnp.arange(
+        bayesian_sweep_min_exponent,
+        bayesian_sweep_max_exponent + 1,
+        dtype=jnp.float32,
+    )
     return (
         ParameterGrid(
             algorithm="epsilon-greedy",
@@ -82,7 +96,7 @@ def default_parameter_grids(bayesian_sweep: BayesianSweep = "kappa") -> tuple[Pa
         ParameterGrid(
             algorithm="Bayesian P(best)",
             parameter_name=bayesian_sweep,
-            values=2.0 ** jnp.arange(-7, 3, dtype=jnp.float32),
+            values=bayesian_values,
         ),
     )
 
@@ -269,8 +283,8 @@ def _simulate_bayesian_parameter(
     sweep: BayesianSweep,
     fixed_kappa: jax.Array,
     fixed_temperature: jax.Array,
-    prior_alpha: float = 2.0,
-    prior_beta: float = 2.0,
+    fixed_alpha: jax.Array,
+    fixed_beta: jax.Array,
 ) -> jax.Array:
     runs, houses = true_means.shape
     dtype = true_means.dtype
@@ -278,15 +292,29 @@ def _simulate_bayesian_parameter(
     parameter = jnp.asarray(parameter, dtype=dtype)
     fixed_kappa = jnp.asarray(fixed_kappa, dtype=dtype)
     fixed_temperature = jnp.asarray(fixed_temperature, dtype=dtype)
+    fixed_alpha = jnp.asarray(fixed_alpha, dtype=dtype)
+    fixed_beta = jnp.asarray(fixed_beta, dtype=dtype)
     if sweep == "kappa":
         kappa = parameter
         temperature = fixed_temperature
-    else:
+        prior_alpha_value = fixed_alpha
+        prior_beta_value = fixed_beta
+    elif sweep == "temperature":
         kappa = fixed_kappa
         temperature = parameter
+        prior_alpha_value = fixed_alpha
+        prior_beta_value = fixed_beta
+    elif sweep == "alpha":
+        kappa = fixed_kappa
+        temperature = fixed_temperature
+        prior_alpha_value = parameter
+        prior_beta_value = fixed_beta
+    else:
+        kappa = fixed_kappa
+        temperature = fixed_temperature
+        prior_alpha_value = fixed_alpha
+        prior_beta_value = parameter
     temperature = jnp.maximum(temperature, jnp.finfo(dtype).eps)
-    prior_alpha_value = jnp.asarray(prior_alpha, dtype=dtype)
-    prior_beta_value = jnp.asarray(prior_beta, dtype=dtype)
     initial_counts = jnp.zeros((runs, houses), dtype=dtype)
     initial_sums = jnp.zeros((runs, houses), dtype=dtype)
     initial_sum_squares = jnp.zeros((runs, houses), dtype=dtype)
@@ -403,6 +431,8 @@ def _bayesian_curve(
     sweep: BayesianSweep,
     fixed_kappa: float,
     fixed_temperature: float,
+    fixed_alpha: float,
+    fixed_beta: float,
 ) -> jax.Array:
     keys = jax.random.split(key, parameters.shape[0])
     return jax.vmap(
@@ -415,6 +445,8 @@ def _bayesian_curve(
             sweep,
             fixed_kappa,
             fixed_temperature,
+            fixed_alpha,
+            fixed_beta,
         )
     )(keys, parameters)
 
@@ -430,15 +462,25 @@ def run_parameter_study(
     bayesian_sweep: BayesianSweep = "kappa",
     bayesian_fixed_kappa: float = 1.0,
     bayesian_fixed_temperature: float = BAYESIAN_TEMPERATURE,
+    bayesian_fixed_alpha: float = 4.0,
+    bayesian_fixed_beta: float = 2.0,
+    bayesian_sweep_min_exponent: int = -7,
+    bayesian_sweep_max_exponent: int = 2,
 ) -> ParameterStudyResult:
     """Run a normalized pizza-house parameter study."""
 
     if bayesian_sweep not in _VALID_BAYESIAN_SWEEPS:
-        raise ValueError("bayesian_sweep must be either 'kappa' or 'temperature'")
+        raise ValueError(_BAYESIAN_SWEEP_ERROR)
     if bayesian_fixed_kappa <= 0.0:
         raise ValueError("bayesian_fixed_kappa must be positive")
     if bayesian_fixed_temperature <= 0.0:
         raise ValueError("bayesian_fixed_temperature must be positive")
+    if bayesian_fixed_alpha <= 0.0:
+        raise ValueError("bayesian_fixed_alpha must be positive")
+    if bayesian_fixed_beta <= 0.0:
+        raise ValueError("bayesian_fixed_beta must be positive")
+    if bayesian_sweep_max_exponent < bayesian_sweep_min_exponent:
+        raise ValueError("bayesian_sweep_max_exponent must be >= bayesian_sweep_min_exponent")
 
     environment_key, epsilon_key, ucb_key, gradient_key, optimistic_key, bayesian_key = jax.random.split(
         key,
@@ -453,7 +495,14 @@ def run_parameter_study(
         max_sigma=max_sigma,
     )
 
-    grids = {grid.algorithm: grid for grid in default_parameter_grids(bayesian_sweep)}
+    grids = {
+        grid.algorithm: grid
+        for grid in default_parameter_grids(
+            bayesian_sweep,
+            bayesian_sweep_min_exponent=bayesian_sweep_min_exponent,
+            bayesian_sweep_max_exponent=bayesian_sweep_max_exponent,
+        )
+    }
     curves = (
         StudyCurve(
             algorithm=grids["epsilon-greedy"].algorithm,
@@ -516,6 +565,8 @@ def run_parameter_study(
                 bayesian_sweep,
                 bayesian_fixed_kappa,
                 bayesian_fixed_temperature,
+                bayesian_fixed_alpha,
+                bayesian_fixed_beta,
             ),
         ),
     )
@@ -570,12 +621,21 @@ def plot_parameter_study(result: ParameterStudyResult, path: str | Path) -> Path
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    latex_available = which("latex") is not None and which("dvipng") is not None
+    plt.rcParams.update(
+        {
+            "font.family": "serif",
+            "mathtext.fontset": "cm",
+            "text.usetex": latex_available,
+        }
+    )
+
     styles = {
-        "epsilon-greedy": {"color": "#ff2d1f", "marker": "o"},
-        "UCB": {"color": "#1f55ff", "marker": "s"},
-        "gradient bandit": {"color": "#00b52a", "marker": "^"},
-        "optimistic greedy": {"color": "#111111", "marker": "D"},
-        "Bayesian P(best)": {"color": "#8a2be2", "marker": "P"},
+        "epsilon-greedy": {"color": "#0D1A63", "marker": "o", "linewidth": 2.0},
+        "UCB": {"color": "#1A2CA3", "marker": "s", "linewidth": 2.0},
+        "gradient bandit": {"color": "#2845D6", "marker": "^", "linewidth": 2.0},
+        "optimistic greedy": {"color": "#3B5AF0", "marker": "D", "linewidth": 2.0},
+        "Bayesian P(best)": {"color": "#F68048", "marker": "P", "linewidth": 2.8},
     }
 
     fig, ax = plt.subplots(figsize=(9.5, 5.6))
@@ -585,19 +645,25 @@ def plot_parameter_study(result: ParameterStudyResult, path: str | Path) -> Path
             curve.parameter_values,
             curve.average_rewards,
             label=f"{curve.algorithm} ({curve.parameter_name})",
-            linewidth=2.0,
             markersize=5.0,
             **style,
         )
 
-    tick_values = 2.0 ** jnp.arange(-7, 3, dtype=jnp.float32)
-    tick_labels = ["1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4"]
+    all_parameter_values = jnp.concatenate([curve.parameter_values for curve in result.curves])
+    min_exponent = int(jnp.floor(jnp.log2(jnp.min(all_parameter_values))))
+    max_exponent = int(jnp.ceil(jnp.log2(jnp.max(all_parameter_values))))
+    tick_exponents = range(min_exponent, max_exponent + 1)
+    tick_values = 2.0 ** jnp.arange(min_exponent, max_exponent + 1, dtype=jnp.float32)
+    tick_labels = [
+        f"1/{2 ** abs(exponent)}" if exponent < 0 else f"{2 ** exponent}"
+        for exponent in tick_exponents
+    ]
     ax.set_xscale("log", base=2)
     ax.set_xticks(tick_values)
     ax.set_xticklabels(tick_labels)
-    ax.set_xlabel("parameter value")
-    ax.set_ylabel(f"average reward over first {result.steps} steps")
-    ax.set_title("Pizza-house bandit parameter study")
+    ax.set_xlabel(r"Parameter value")
+    ax.set_ylabel(rf"Average reward over first ${result.steps}$ steps")
+    ax.set_title(r"Pizza-house bandit parameter study")
     ax.grid(True, alpha=0.25)
     ax.legend(frameon=False)
     fig.tight_layout()
