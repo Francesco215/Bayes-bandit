@@ -76,7 +76,7 @@ learning book:
 | optimistic greedy | `Q0` | Start with optimistic values to force early exploration. |
 | Bayesian P(best) | `kappa`, `temperature`, `alpha`, or `beta` | Use posterior uncertainty over latent mean reward. |
 
-![Parameter study](outputs/parameter_study.png)
+![Parameter study](parameter_study.png)
 
 Latest beta sweep:
 
