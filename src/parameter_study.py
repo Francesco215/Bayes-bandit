@@ -41,6 +41,8 @@ class ParameterStudyResult(NamedTuple):
     runs: int
     steps: int
     houses: int
+    example_true_means: jax.Array
+    example_true_sigmas: jax.Array
 
 
 class StudyArtifactPaths(NamedTuple):
@@ -48,6 +50,7 @@ class StudyArtifactPaths(NamedTuple):
 
     csv_path: Path
     plot_path: Path
+    reward_distribution_path: Path
 
 
 def default_parameter_grids(bayesian_sweep: BayesianSweep = "kappa") -> tuple[ParameterGrid, ...]:
@@ -516,7 +519,14 @@ def run_parameter_study(
             ),
         ),
     )
-    return ParameterStudyResult(curves=curves, runs=runs, steps=steps, houses=houses)
+    return ParameterStudyResult(
+        curves=curves,
+        runs=runs,
+        steps=steps,
+        houses=houses,
+        example_true_means=true_means[0],
+        example_true_sigmas=true_sigmas[0],
+    )
 
 
 def write_parameter_study_csv(result: ParameterStudyResult, path: str | Path) -> Path:
@@ -596,6 +606,84 @@ def plot_parameter_study(result: ParameterStudyResult, path: str | Path) -> Path
     return plot_path
 
 
+def _prepare_matplotlib(path: str | Path) -> Path:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    matplotlib_config = output_path.parent / ".matplotlib"
+    matplotlib_config.mkdir(parents=True, exist_ok=True)
+    cache_dir = output_path.parent / ".cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    os.environ["MPLCONFIGDIR"] = str(matplotlib_config)
+    os.environ["XDG_CACHE_HOME"] = str(cache_dir)
+    return output_path
+
+
+def plot_reward_distributions(
+    true_means: jax.Array,
+    true_sigmas: jax.Array,
+    path: str | Path,
+    title: str = "Reward distributions",
+) -> Path:
+    """Save a Sutton/Barto-style plot of the true per-house reward distributions."""
+
+    plot_path = _prepare_matplotlib(path)
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    means = jnp.asarray(true_means)
+    sigmas = jnp.asarray(true_sigmas)
+    houses = int(means.shape[0])
+    min_y = float(jnp.min(means - 3.5 * sigmas))
+    max_y = float(jnp.max(means + 3.5 * sigmas))
+    y_values = jnp.linspace(min_y, max_y, 512)
+    x_positions = jnp.arange(1, houses + 1)
+
+    fig, ax = plt.subplots(figsize=(max(8.0, 0.72 * houses + 2.5), 5.8))
+    for index in range(houses):
+        density = jnp.exp(
+            -0.5 * jnp.square((y_values - means[index]) / sigmas[index])
+        ) / (sigmas[index] * jnp.sqrt(2.0 * jnp.pi))
+        width = 0.42 * density / jnp.max(density)
+        x_center = x_positions[index]
+        ax.fill_betweenx(
+            y_values,
+            x_center - width,
+            x_center + width,
+            color="0.62",
+            linewidth=0,
+        )
+        ax.plot(
+            [x_center - 0.22, x_center + 0.22],
+            [means[index], means[index]],
+            color="0.1",
+            linewidth=0.8,
+        )
+        ax.text(
+            x_center + 0.25,
+            means[index],
+            rf"$q_{{*}}({index + 1})$",
+            va="center",
+            fontsize=9,
+        )
+
+    ax.axhline(0.0, color="0.25", linestyle=(0, (6, 6)), linewidth=1.0)
+    ax.set_xlim(0.5, houses + 0.5)
+    ax.set_xticks(x_positions)
+    ax.set_xlabel("Pizza house")
+    ax.set_ylabel("Reward distribution")
+    ax.set_title(title)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis="x", color="0.88", linewidth=0.7)
+    fig.tight_layout()
+    fig.savefig(plot_path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
+    return plot_path
+
+
 def save_parameter_study(result: ParameterStudyResult, output_dir: str | Path) -> StudyArtifactPaths:
     """Save CSV and plot artifacts for a parameter-study result."""
 
@@ -603,4 +691,14 @@ def save_parameter_study(result: ParameterStudyResult, output_dir: str | Path) -
     output_path.mkdir(parents=True, exist_ok=True)
     csv_path = write_parameter_study_csv(result, output_path / "parameter_study.csv")
     plot_path = plot_parameter_study(result, output_path / "parameter_study.png")
-    return StudyArtifactPaths(csv_path=csv_path, plot_path=plot_path)
+    reward_distribution_path = plot_reward_distributions(
+        result.example_true_means,
+        result.example_true_sigmas,
+        output_path / "reward_distributions.png",
+        title="Example pizza-house reward distributions",
+    )
+    return StudyArtifactPaths(
+        csv_path=csv_path,
+        plot_path=plot_path,
+        reward_distribution_path=reward_distribution_path,
+    )

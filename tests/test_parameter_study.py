@@ -89,7 +89,9 @@ class ParameterStudyTest(unittest.TestCase):
 
             self.assertTrue(artifacts.csv_path.exists())
             self.assertTrue(artifacts.plot_path.exists())
+            self.assertTrue(artifacts.reward_distribution_path.exists())
             self.assertGreater(artifacts.plot_path.stat().st_size, 0)
+            self.assertGreater(artifacts.reward_distribution_path.stat().st_size, 0)
 
             with artifacts.csv_path.open() as csv_file:
                 rows = list(csv.DictReader(csv_file))

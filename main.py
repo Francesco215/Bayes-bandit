@@ -13,6 +13,7 @@ from src import (
     ParameterStudyResult,
     SimulationResult,
     mean_posterior_params,
+    plot_reward_distributions,
     predictive_params,
     run_parameter_study,
     save_parameter_study,
@@ -61,21 +62,21 @@ def validate_demo_config(cfg: DictConfig) -> None:
         raise ValueError("demo.mc_samples must be at least 1")
     if cfg.grid_points < 2:
         raise ValueError("demo.grid_points must be at least 2")
-    if cfg.prior.kappa <= 0.0:
+    if cfg.prior["kappa"] <= 0.0:
         raise ValueError("demo.prior.kappa must be positive")
-    if cfg.prior.alpha <= 0.0:
+    if cfg.prior["alpha"] <= 0.0:
         raise ValueError("demo.prior.alpha must be positive")
-    if cfg.prior.beta <= 0.0:
+    if cfg.prior["beta"] <= 0.0:
         raise ValueError("demo.prior.beta must be positive")
 
 
 def run_demo(cfg: DictConfig) -> None:
     validate_demo_config(cfg)
     prior = NormalInverseGammaPrior(
-        mu=cfg.prior.mu,
-        kappa=cfg.prior.kappa,
-        alpha=cfg.prior.alpha,
-        beta=cfg.prior.beta,
+        mu=cfg.prior["mu"],
+        kappa=cfg.prior["kappa"],
+        alpha=cfg.prior["alpha"],
+        beta=cfg.prior["beta"],
     )
     result = simulate_bandit(
         key=jax.random.PRNGKey(cfg.seed),
@@ -87,6 +88,14 @@ def run_demo(cfg: DictConfig) -> None:
         grid_points=cfg.grid_points,
     )
     print_result(cfg, result)
+    reward_distribution_path = plot_reward_distributions(
+        result.true_means,
+        result.true_sigmas,
+        Path(str(cfg.output_dir)) / "reward_distributions.png",
+        title="Pizza-house reward distributions",
+    )
+    print()
+    print(f"reward_distributions={reward_distribution_path}")
 
 
 def validate_study_config(cfg: DictConfig) -> None:
@@ -146,6 +155,7 @@ def run_study(cfg: DictConfig) -> None:
     print()
     print(f"csv={artifacts.csv_path}")
     print(f"plot={artifacts.plot_path}")
+    print(f"reward_distributions={artifacts.reward_distribution_path}")
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
