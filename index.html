@@ -224,6 +224,45 @@
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 6px;
       margin: 4px 0 12px;
+      position: relative;
+    }
+    .arm-pulls.arm-pulls-callout::after {
+      content: "";
+      position: absolute;
+      inset: -8px;
+      border: 4px solid #ffd400;
+      border-radius: 4px;
+      box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.22);
+      pointer-events: none;
+      animation: armPullCallout 2.4s ease-out both;
+    }
+    @keyframes armPullCallout {
+      0% {
+        opacity: 0;
+        transform: scale(0.98);
+      }
+      10%,
+      30%,
+      50%,
+      70% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      20%,
+      40%,
+      60% {
+        opacity: 0.18;
+        transform: scale(1.015);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.03);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .arm-pulls.arm-pulls-callout::after {
+        animation: none;
+      }
     }
     .arm-pulls button {
       position: relative;
@@ -853,7 +892,7 @@
         The recipe is the same one Thompson wrote down in 1933 (algorithm 1) <d-cite key="thompson1933"></d-cite>:
       </p>
       <p>
-        On its own this is just a one-step decision rule. Put it inside the bandit loop, where every pull adds
+        On its own this is just a one-step decision rule. If wr put it inside the bandit loop, where every pull adds
         one more observation to $D$, and it becomes an adaptive algorithm: uncertainty drives exploration early on,
         then the posterior concentrates and the policy naturally settles on the arms that keep looking best (algorithm 2).
       </p>
@@ -1151,11 +1190,12 @@
 
   <p>
     UCB wins by $0.0118$ which is $\sim 0.76\%$ better than the bayesian method.<br>
-    This is not that suprising given that the UCB policy looks bayesian-ish.
+    The fact that the result is so similar is not that surprising given that the UCB policy looks bayesian-ish.
     $$
     A_t \;=\; \arg\max_k\!\left[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\right].
     $$
     I had a whole section explaining the tradeoffs and differences between UCB and the Bayesian method, but honestly that's not that interesting.<br>
+    Let's just jump straight to the conclusion!
   </p>
 
 
@@ -1167,14 +1207,14 @@
       The agent is not exploring because we told it to explore. It explores because uncertainty changes what “best action” means.
   </p>
   <p>
-      In this blog we've explored it applied to the $K$-armed bandit problem. I believe this concept extends beyond this.<br>
+      In this blog we've explored it in the context of the $K$-armed bandit problem. I believe this concept extends beyond this setting.<br>
       The next environment I am working on is a chess engine built around the same idea. In a
       bandit, curiosity decides which arm deserves another pull. In chess, it decides which branch
       of the game tree deserves another look: not just the move that currently looks best, but the
       move whose uncertainty could still change the answer.
   </p>
   <p>
-      If you want to contribute in any way, reach out! 🐝
+      I hope you found this interesting. If you want to contribute in any way, reach out! 🐝
   </p>
 
 </d-article>
@@ -1490,6 +1530,48 @@
     sharedState.listeners.forEach(fn => fn());
   }
 
+  function showArmPullCalloutAtViewportMiddle(el) {
+    if (!el) return;
+
+    let hasTriggered = false;
+    let ticking = false;
+
+    function cleanup() {
+      window.removeEventListener("scroll", scheduleCheck);
+      window.removeEventListener("resize", scheduleCheck);
+    }
+
+    function trigger() {
+      hasTriggered = true;
+      cleanup();
+      el.classList.add("arm-pulls-callout");
+      window.setTimeout(() => {
+        el.classList.remove("arm-pulls-callout");
+      }, 2500);
+    }
+
+    function checkPosition() {
+      ticking = false;
+      if (hasTriggered) return;
+
+      const rect = el.getBoundingClientRect();
+      const viewportMiddle = window.innerHeight / 2;
+      if (rect.top <= viewportMiddle && rect.bottom >= viewportMiddle) {
+        trigger();
+      }
+    }
+
+    function scheduleCheck() {
+      if (ticking || hasTriggered) return;
+      ticking = true;
+      window.requestAnimationFrame(checkPosition);
+    }
+
+    window.addEventListener("scroll", scheduleCheck, { passive: true });
+    window.addEventListener("resize", scheduleCheck);
+    scheduleCheck();
+  }
+
   /* ============================================================
      Figure 1 — evidence bucket violin plot
      ============================================================ */
@@ -1550,6 +1632,7 @@
       btn.addEventListener("click", () => pullArmFromPosteriorDemo(k));
       pullsBox.appendChild(btn);
     }
+    showArmPullCalloutAtViewportMiddle(pullsBox);
 
     function bucketize(samples) {
       const counts = Array(bucketCount).fill(0);
