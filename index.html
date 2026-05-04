@@ -1483,15 +1483,11 @@
     return draw;
   }
 
-  function resetPulls() {
+  function newWorld() {
+    sharedState.arms = makeWorld({ muScale: 1.0, sigMin: 0.5, sigMax: 1.5 });
     sharedState.pulls = emptyPulls();
     sharedState.lastPull = null;
     notify();
-  }
-
-  function newWorld() {
-    sharedState.arms = makeWorld({ muScale: 1.0, sigMin: 0.5, sigMax: 1.5 });
-    resetPulls();
   }
 
   function notify() {
@@ -1660,7 +1656,7 @@
     document.getElementById("evidence-pull10").addEventListener("click", () => {
       for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K));
     });
-    document.getElementById("evidence-reset").addEventListener("click", () => resetPulls());
+    document.getElementById("evidence-reset").addEventListener("click", () => newWorld());
 
     draw();
   })();
@@ -1912,7 +1908,7 @@
     document.getElementById("post-pull10").addEventListener("click", () => {
       for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K));
     });
-    document.getElementById("post-reset").addEventListener("click", () => resetPulls());
+    document.getElementById("post-reset").addEventListener("click", () => newWorld());
 
     ["prior-mu", "prior-kappa", "prior-alpha", "prior-beta"].forEach(id => {
       const el = document.getElementById(id);
@@ -2074,17 +2070,13 @@
 
     // Reset MC tally when the world or prior changes (NOT on every pull —
     // that would wipe the strip while streaming the policy).
-    document.getElementById("arms-resample").addEventListener("click", () => {
-      draws = [];
-      wins = Array(K).fill(0);
-      totalDraws = 0;
-      draw();
-    });
-    document.getElementById("post-reset").addEventListener("click", () => {
-      draws = [];
-      wins = Array(K).fill(0);
-      totalDraws = 0;
-      draw();
+    ["arms-resample", "post-reset", "evidence-reset"].forEach(id => {
+      document.getElementById(id).addEventListener("click", () => {
+        draws = [];
+        wins = Array(K).fill(0);
+        totalDraws = 0;
+        draw();
+      });
     });
     ["prior-mu", "prior-kappa", "prior-alpha", "prior-beta"].forEach(id => {
       document.getElementById(id).addEventListener("input", () => {
