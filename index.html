@@ -284,6 +284,58 @@
       color: var(--bb-ink-soft);
     }
 
+    .algo-block {
+      border-left: 1px solid var(--bb-gray);
+      margin: 1.1em 0 1.4em;
+      padding: 0.2em 0 0.2em 1em;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .algo-block .algo-title {
+      margin: 0 0 0.45em;
+      font-weight: 700;
+      color: var(--bb-ink);
+    }
+    .algo-block .algo-line {
+      margin: 0;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 13px;
+      color: #4c4f69;
+    }
+    .algo-block .algo-keyword { color: #8839ef; font-weight: 600; }
+    .algo-block .algo-fn { color: #1e66f5; }
+    .algo-block .algo-var { color: #d20f39; }
+    .algo-block .algo-op { color: #179299; }
+    .algo-block .algo-atom { color: #fe640b; }
+    .algo-block .algo-math { color: #209fb5; }
+    .algo-block .indent-1 { padding-left: 1.5em; }
+    .algo-block .indent-2 { padding-left: 3em; }
+    .algo-block .algo-note {
+      margin: 0.65em 0 0;
+      color: #6c6f85;
+      font-size: 13px;
+    }
+    .algo-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.82fr);
+      gap: 20px 34px;
+      align-items: start;
+      margin: 1.2em 0 1.6em;
+    }
+    .algo-split p:first-child,
+    .algo-split .algo-block:first-child {
+      margin-top: 0;
+    }
+    .algo-split p:last-child,
+    .algo-split .algo-block:last-child {
+      margin-bottom: 0;
+    }
+    @media (max-width: 760px) {
+      .algo-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
     blockquote {
       border-left: 3px solid var(--bb-orange);
       margin: 1.2em 0;
@@ -336,7 +388,7 @@
 
 <d-title>
   <h1>The Bayes Bandit</h1>
-  <p>A weekend attempt to solve the k-armed bandit problem the fully Bayesian way &mdash; by tracking a posterior over how good each arm <em>really</em> is, and acting on the probability that an arm is best.</p>
+  <p>Pew Pew</p>
 </d-title>
 
 <d-byline>
@@ -359,7 +411,11 @@
 
 <d-article>
 
-  <h2>The k-armed bandit, in one paragraph</h2>
+  <h2>What is The $K$-armed bandit problem?</h2>
+  <p>
+      The $K$-armed bandit problem is perhaps one of the worse named pieces of math, However it has important applications
+      in reinforcement learning. Let's see how it works.
+  </p>
   <p>
     You walk into a room with $K$ slot machines. Each one pays out a noisy reward drawn from its own
     Gaussian distribution &mdash; you don't know the means, you don't know the variances, and you have a
@@ -378,7 +434,7 @@
   </blockquote>
 
   <p>
-    That posterior probability is the natural object. If we can track it, we can act on it directly.
+    If we can track it, we can act on it directly. (spoiler: we can!) <br>
     This post walks through the model, the math, and the resulting policy &mdash; and then puts it head-to-head with the
     classical baselines.
   </p>
@@ -392,7 +448,6 @@
     $$
     The figure below shows five arms freshly sampled from the environment used in the study. The thick
     bar marks the latent mean $\mu_k$; the violin shows the spread of rewards you'd actually see.
-    <strong>Re-roll</strong> to see how different the world can look from one instance to the next.
   </p>
 
   <figure>
@@ -418,42 +473,51 @@
     </aside>
   </div>
 
-  <h2>A posterior over each arm</h2>
+  <h2>Reverse-engineering the arms</h2>
   <p>
-    For each arm, the Bayesian method maintains a Normal-Inverse-Gamma posterior over the unknown
-    Gaussian parameters:
+    We do not know directly the true mean and standard deviation of each arm, but after pulling an arm we can collect a dataset.
+    $D_k = \{r_{k,1},\dots,r_{k,n}\}$ of observed rewards. The bigger the dataset, the better our estimate of the true mean and std— But how do we do this quantitatively?<br>
+
+
+    Just as the Gaussian model gives us the likelihood
+    $p(D_k \mid \mu_k,\sigma_k^2)$, Bayes' rule turns that evidence around into a posterior belief over the
+    unknown parameters:
     $$
     p(\mu_k,\sigma_k^2 \mid D_k)
     $$
-    where $D_k$ is the set of rewards observed from arm $k$.
   </p>
   <p>
-    The marginal posterior over the latent mean is Student-$t$:
+    If we focus just on the arm's hidden mean, that posterior becomes a Student-$t$ distribution:
     $$
     \mu_k \mid D_k \sim t
     $$
-    This is the distribution shown below. Each blue curve represents what the model currently believes
+    This is the distribution shown below in figure 2. Each colored curve represents what the model currently believes
     about one arm's expected reward, not just the next noisy reward from that arm.
   </p>
   <p>
-    Pull arms below and watch each posterior tighten as evidence accumulates. The true means are shown as
-    orange bars, so you can see the posterior move from prior uncertainty toward the hidden reward
-    landscape.
+    Each time you pull an arm the available information at your disposal increases. You can then use that information to improve your estimate of the ground truth mean.
   </p>
 
   <details class="math-details">
     <summary>Posterior update details</summary>
     <p>
-      The conjugate prior for an unknown-mean, unknown-variance Gaussian is the
+      Bayes' rule says that the posterior is proportional to the likelihood times the prior:
+      $$
+      p(\mu_k,\sigma_k^2 \mid D_k)
+      \;\propto\;
+      p(D_k \mid \mu_k,\sigma_k^2)\,p(\mu_k,\sigma_k^2).
+      $$
+      For a Gaussian reward model with unknown mean and variance, we choose the conjugate
       <em>Normal-Inverse-Gamma</em> prior:
       $$
       \sigma_k^2 \sim \mathrm{InvGamma}(\alpha_0,\beta_0),
       \qquad
       \mu_k\mid\sigma_k^2 \sim \mathcal N\!\left(\mu_0,\tfrac{\sigma_k^2}{\kappa_0}\right).
       $$
-      The four hyperparameters $(\mu_0,\kappa_0,\alpha_0,\beta_0)$ encode what we believe before pulling
-      anything. After observing rewards $D_k=\{r_{k,1},\dots,r_{k,n_k}\}$ with sum $s_k$ and squared-sum
-      $q_k$, conjugacy gives us a closed-form posterior of the same family:
+      The prior term contains the four hyperparameters $(\mu_0,\kappa_0,\alpha_0,\beta_0)$, which encode
+      what we believe before pulling anything. After observing rewards
+      $D_k=\{r_{k,1},\dots,r_{k,n_k}\}$ with sum $s_k$ and squared-sum $q_k$, conjugacy lets us multiply
+      likelihood and prior and stay in the same family:
       $$
       \kappa_{k,n} = \kappa_0 + n_k,
       \qquad
@@ -525,31 +589,56 @@
   </div>
 
   <h2>The right question to ask</h2>
+  <blockquote>
+    Given the information available, what is the best action I can take?
+  </blockquote>
   <p>
-    We have a posterior on every arm's latent mean. So far so standard. The Bayesian move is to ask
-    something the classical algorithms never explicitly compute &mdash; the posterior probability that arm
-    $k$ is the best arm:
+    We can translate that question into the posteriors we just built. For each arm $k$, ask how likely
+    it is that its latent mean is larger than every other arm's estimated mean:
     $$
     \mathbb P(k^\star = k\mid D) \;=\; \mathbb P\!\big(\mu_k\ge \mu_j\;\forall j\ne k\,\big|\,D\big).
     $$
-    Assuming the posteriors factorize across arms (they do, since each arm only learns from its own
-    pulls), this collapses to a one-dimensional integral:
-    $$
-    \mathbb P(k^\star = k\mid D) \;=\; \int_{-\infty}^{\infty} f_k(x)\!\prod_{j\ne k} F_j(x)\,dx,
-    $$
-    where $f_k$ is arm $k$'s posterior density and $F_j$ are the other arms' CDFs. In words: weight every
-    candidate value $x$ by how plausible it is for arm $k$, times the probability that every other arm
-    is below it.
-  </p>
-  <p>
-    For more than a couple of arms it's faster to estimate this by Monte Carlo. The recipe is the same
-    one Thompson<d-cite key="thompson1933"></d-cite> wrote down in 1933:
-  </p>
-  <ol>
-    <li>For every arm, draw a candidate latent mean $\tilde\mu_k\sim p(\mu_k\mid D_k)$.</li>
-    <li>Whichever arm has the largest sample &mdash; call it the winner of this draw.</li>
-    <li>The fraction of draws that arm $k$ wins is $\widehat{\mathbb P}(k^\star=k\mid D)$.</li>
-  </ol>
+    </p>
+  <div class="algo-split">
+    <div>
+      <p>
+        The easiest way to estimate this is by Monte Carlo.
+        <d-footnote>
+            There is also another way: assuming the posteriors factorize across arms (as they do), we can collapse it into a one-dimensional integral:
+            $$
+            \mathbb P(k^\star = k\mid D) \;=\; \int_{-\infty}^{\infty} f_k(x)\!\prod_{j\ne k} F_j(x)\,dx,
+            $$
+            where $f_k$ is arm $k$'s posterior density and $F_j$ are the other arms' CDFs. In words: weight every
+            candidate value $x$ by how plausible it is for arm $k$, times the probability that every other arm
+            is below it.
+        </d-footnote>
+        The recipe is the same one Thompson wrote down in 1933 (algorithm 1) <d-cite key="thompson1933"></d-cite>:
+      </p>
+      <p>
+        On its own this is just a one-step decision rule. Put it inside the bandit loop, where every pull adds
+        one more observation to $D$, and it becomes an adaptive algorithm: uncertainty drives exploration early on,
+        then the posterior concentrates and the policy naturally settles on the arms that keep looking best (algorithm 2).
+      </p>
+    </div>
+    <div>
+      <div class="algo-block">
+        <p class="algo-line"><span class="algo-keyword">def</span> <span class="algo-fn">thompson_sampling</span>(<span class="algo-var">$D$</span>):</p>
+        <p class="algo-line indent-1"><span class="algo-keyword">for</span> each arm <span class="algo-var">$k$</span>:</p>
+        <p class="algo-line indent-2"><span class="algo-keyword">draw</span> <span class="algo-math">$\tilde\mu_k \sim p(\mu_k\mid D_k)$</span></p>
+        <p class="algo-line indent-1"><span class="algo-keyword">return</span> <span class="algo-math">$\arg\max_k \tilde\mu_k$</span></p>
+        <p class="algo-note">Algorithm 1</p>
+      </div>
+      <div class="algo-block">
+        <p class="algo-line"><span class="algo-keyword">def</span> <span class="algo-fn">bayes_bandit</span>(<span class="algo-var">$D$</span>):</p>
+        <p class="algo-line indent-1"><span class="algo-keyword">for</span> <span class="algo-var">$t$</span> <span class="algo-op">=</span> <span class="algo-atom">$1, 2, \ldots$</span>:</p>
+        <p class="algo-line indent-2"><span class="algo-var">$a_t$</span> <span class="algo-op">=</span> <span class="algo-fn">thompson_sampling</span>(<span class="algo-var">$D$</span>)</p>
+        <p class="algo-line indent-2"><span class="algo-keyword">pull</span> arm <span class="algo-var">$a_t$</span> <span class="algo-op">&amp;</span> observe reward <span class="algo-var">$r_t$</span></p>
+        <p class="algo-line indent-2"><span class="algo-keyword">append</span> <span class="algo-math">$(a_t, r_t)$</span> to <span class="algo-var">$D$</span></p>
+        <p class="algo-line indent-1"><span class="algo-keyword">return</span> <span class="algo-var">$p(\mu_k \mid D)$</span></p>
+        <p class="algo-note">Algorithm 2</p>
+      </div>
+    </div>
+  </div>
 
   <figure class="l-page-outset">
     <div class="bb-card">
@@ -584,25 +673,16 @@
     </figcaption>
   </figure>
 
-  <h2>The policy: Thompson sampling, almost for free</h2>
   <p>
-    There's a delightful coincidence in the Monte Carlo recipe: <em>step 1 &amp; step 2 alone are already a
-    reasonable policy</em>. Sample one latent mean per arm, take the winner, pull it. That's
-    Thompson sampling, and the probability of pulling arm $k$ under this policy is exactly
-    $\mathbb P(k^\star=k\mid D)$ &mdash; matching exploration to belief.
+      As you can see this algo works pretty well and it's oddly satifying to watch, now let's compare with other known methods.
   </p>
+  <h2>Comparison with known methods</h2>
+  
   <p>
-    The implementation in the study softens this slightly with a temperature $T$:
-    $$
-    \pi(k\mid D)\;=\;\frac{\exp(\tilde\mu_k/T)}{\sum_j \exp(\tilde\mu_j/T)},
-    \qquad \tilde\mu_k\sim p(\mu_k\mid D_k).
-    $$
-    As $T\to0$ the softmax becomes an argmax and we recover plain Thompson sampling; large $T$ adds
-    extra exploration on top. In all the sweeps below, $T$ is small.
-  </p>
-
-  <h2>How does it stack up?</h2>
-  <p>
+  <blockquote>
+      Comparison is the thief of joy <br>
+      - Not a scientist
+  </blockquote>
     Five algorithms, one knob each, swept across powers of two. The benchmark is average reward over
     the first 1000 steps in the Gaussian k-armed environment from Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.
   </p>
