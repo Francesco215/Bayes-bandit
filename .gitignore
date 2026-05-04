@@ -1,13 +1,5 @@
 .venv/
 
 **/__pycache__/
-**
-!conf/
-!conf/config.yaml
-!math.md
-!reward_distributions_palette.png
-!src/
-!src/parameter_study.py
-!tests/
-!tests/test_parameter_study.py
+outputs/
 uv.lock

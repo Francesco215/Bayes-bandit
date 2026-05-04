@@ -1,0 +1,34 @@
+algorithm,parameter_name,parameter_value,average_reward
+epsilon-greedy,epsilon,0.0078125,1.203561782836914
+epsilon-greedy,epsilon,0.015625,1.2536447048187256
+epsilon-greedy,epsilon,0.03125,1.329335331916809
+epsilon-greedy,epsilon,0.0625,1.3814090490341187
+epsilon-greedy,epsilon,0.125,1.3209702968597412
+epsilon-greedy,epsilon,0.25,1.1555054187774658
+UCB,c,0.0625,1.4846912622451782
+UCB,c,0.125,1.4838662147521973
+UCB,c,0.25,1.510622501373291
+UCB,c,0.5,1.5400928258895874
+UCB,c,1.0,1.5490214824676514
+UCB,c,2.0,1.4566632509231567
+UCB,c,4.0,1.2226698398590088
+gradient bandit,alpha,0.03125,1.1569921970367432
+gradient bandit,alpha,0.0625,1.3538072109222412
+gradient bandit,alpha,0.125,1.4526829719543457
+gradient bandit,alpha,0.25,1.473517894744873
+gradient bandit,alpha,0.5,1.4149235486984253
+gradient bandit,alpha,1.0,1.2436373233795166
+gradient bandit,alpha,2.0,1.057377576828003
+optimistic greedy,Q0,0.25,1.3421339988708496
+optimistic greedy,Q0,0.5,1.434624195098877
+optimistic greedy,Q0,1.0,1.5124797821044922
+optimistic greedy,Q0,2.0,1.4700642824172974
+optimistic greedy,Q0,4.0,1.382765293121338
+Bayesian P(best),beta,0.125,1.333207607269287
+Bayesian P(best),beta,0.25,1.4417643547058105
+Bayesian P(best),beta,0.5,1.5117064714431763
+Bayesian P(best),beta,1.0,1.533226728439331
+Bayesian P(best),beta,2.0,1.5371930599212646
+Bayesian P(best),beta,4.0,1.5219858884811401
+Bayesian P(best),beta,8.0,1.4916837215423584
+Bayesian P(best),beta,16.0,1.459448218345642

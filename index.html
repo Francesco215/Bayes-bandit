@@ -1,0 +1,1633 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bayes Bandit</title>
+  <script src="https://distill.pub/template.v2.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.js" integrity="sha384-GxNFqL3r9uRJQhR+47eDxuPoNE7yLftQM8LcxzgS4HT73tp970WS/wV5p8UzCOmb" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/contrib/auto-render.min.js" integrity="sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl" crossorigin="anonymous"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
+  <style>
+    /* Distill-style cards / widgets, matching the reference post palette */
+    :root {
+      --bb-orange: rgb(230, 120, 20);
+      --bb-blue: rgb(55, 100, 230);
+      --bb-blue-soft: rgba(70, 130, 255, 0.22);
+      --bb-orange-soft: rgba(255, 140, 0, 0.25);
+      --bb-gray: rgba(80, 80, 80, 0.42);
+      --bb-line: #cfd4d8;
+      --bb-ink: #121212;
+      --bb-ink-soft: #4a4f55;
+      --bb-bg-card: transparent;
+    }
+
+    figcaption {
+      text-wrap: pretty;
+    }
+
+    .bb-card {
+      border-radius: 10px;
+      background: transparent;
+      padding: 18px 20px 16px;
+    }
+
+    .bb-card h3 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+    .bb-card .bb-sub {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--bb-ink-soft);
+    }
+    .bb-plot-wrap {
+      border-radius: 8px;
+      overflow: hidden;
+      background: transparent;
+    }
+    .bb-plot-wrap svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .mc-bottom-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 240px;
+      gap: 18px;
+      margin-top: 16px;
+      align-items: stretch;
+    }
+    .mc-bottom-row > * { grid-column: auto !important; grid-area: auto !important; }
+    .mc-bars-wrap { min-width: 0; width: 100%; }
+    .mc-bars-wrap svg { width: 100% !important; height: auto !important; display: block; }
+    .mc-controls-aside {
+      align-self: stretch;
+      box-shadow: none;
+      border: 1px solid #e1e4e8;
+      background: #fafbfc;
+      padding: 14px 16px;
+      border-radius: 10px;
+    }
+    @media (max-width: 760px) {
+      .mc-bottom-row { grid-template-columns: 1fr; }
+    }
+
+    /* Controls in the right gutter, matching reference */
+    .bb-controls.l-gutter {
+      margin-top: 8px;
+      margin-bottom: 14px;
+      border-left: 1px solid #d8dde3;
+      padding-left: 22px;
+    }
+    .bb-controls aside {
+      max-width: 560px;
+      padding: 18px;
+    }
+    .bb-controls h4 {
+      margin: 18px 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .bb-controls h4:first-child { margin-top: 0; }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: max-content minmax(140px, 1fr) max-content;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    .control-row label {
+      margin: 0;
+      font-size: 12px;
+      color: var(--bb-ink);
+      white-space: nowrap;
+      justify-self: end;
+    }
+    .control-row input[type="range"] {
+      width: 100%;
+      margin: 0;
+      accent-color: #2a72be;
+    }
+    .value-chip {
+      display: inline-block;
+      text-align: right;
+      min-width: 48px;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+      color: var(--bb-blue);
+      font-weight: 600;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .actions button {
+      width: 100%;
+      height: 52px;
+      border-radius: 10px;
+      border: 1px solid #a7afb5;
+      background: rgba(255, 255, 255, 0.46);
+      color: #444;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .actions button:hover { background: rgba(255,255,255,0.85); }
+    .actions button.primary {
+      grid-column: 1 / -1;
+      height: 70px;
+      border: 1px solid #2b6caf;
+      background: linear-gradient(135deg, #2f79cc 0%, #2979d8 100%);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+      font-weight: 600;
+    }
+    .actions button.primary:hover { background: linear-gradient(135deg, #2767ad 0%, #2467c1 100%); }
+
+    .stat-line {
+      margin: 6px 0;
+      font-size: 13px;
+      color: var(--bb-ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .divider {
+      height: 1px;
+      border: none;
+      margin: 16px 0 12px;
+      background: var(--bb-line);
+    }
+
+    /* Arm pull buttons used in the posterior demo */
+    .arm-pulls {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      margin: 4px 0 12px;
+    }
+    .arm-pulls button {
+      position: relative;
+      padding: 8px 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #c8ced3;
+      background: rgba(255,255,255,0.6);
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: background 120ms, border-color 120ms, transform 80ms;
+    }
+    .arm-pulls button:hover {
+      background: #fff;
+      border-color: #8a939b;
+    }
+    .arm-pulls button:active {
+      transform: translateY(1px);
+    }
+    .arm-pulls button .arm-bar {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+    }
+    .arm-pulls button .arm-num {
+      font-size: 13px;
+      font-weight: 700;
+      color: #222;
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+    .arm-pulls button .arm-n {
+      font-variant-numeric: tabular-nums;
+      font-size: 10px;
+      color: #6a727a;
+      line-height: 1;
+    }
+    .arm-pulls-label {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a727a;
+      margin: 0 0 6px;
+      font-weight: 600;
+    }
+
+    /* Results table */
+    table.bb-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+    }
+    table.bb-table th, table.bb-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--bb-line);
+      text-align: left;
+    }
+    table.bb-table th { font-weight: 600; }
+    table.bb-table td.num, table.bb-table th.num { text-align: right; }
+    table.bb-table tr.highlight td { background: rgba(255, 140, 0, 0.08); }
+
+    /* Inline algorithm card grid */
+    .algo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .algo-card {
+      border: 1px solid var(--bb-line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.4);
+    }
+    .algo-card h5 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .algo-card .param {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+      color: var(--bb-blue);
+      margin: 0 0 6px;
+    }
+    .algo-card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--bb-ink-soft);
+    }
+
+    blockquote {
+      border-left: 3px solid var(--bb-orange);
+      margin: 1.2em 0;
+      padding: 0.2em 0 0.2em 1em;
+      color: var(--bb-ink);
+      font-style: italic;
+    }
+
+    @media (max-width: 980px) {
+      .bb-controls.l-gutter {
+        border-left: none;
+        padding-left: 0;
+      }
+    }
+  </style>
+</head>
+
+<d-front-matter>
+  <script type="text/json">{"authors": []}</script>
+</d-front-matter>
+
+<d-title>
+  <h1>The Bayes Bandit</h1>
+  <p>A weekend attempt to solve the k-armed bandit problem the fully Bayesian way &mdash; by tracking a posterior over how good each arm <em>really</em> is, and acting on the probability that an arm is best.</p>
+</d-title>
+
+<d-byline>
+  <div class="byline grid">
+    <div class="authors-affiliations grid">
+      <h3>Authors</h3>
+      <h3>Affiliations</h3>
+      <p class="author"><a class="name" href="https://github.com/Francesco215">Francesco Sacco</a></p>
+      <p class="affiliation">None</p>
+    </div>
+    <div></div>
+    <div class="date-doi">
+      <h3>Date</h3>
+      <p>2025</p>
+      <h3>Code</h3>
+      <p><a href="https://github.com/Francesco215/Bayes-bandit">github.com/Francesco215/Bayes-bandit</a></p>
+    </div>
+  </div>
+</d-byline>
+
+<d-article>
+
+  <h2>The k-armed bandit, in one paragraph</h2>
+  <p>
+    You walk into a room with $K$ slot machines. Each one pays out a noisy reward drawn from its own
+    Gaussian distribution &mdash; you don't know the means, you don't know the variances, and you have a
+    finite number of pulls. Every pull is a tradeoff: <em>exploit</em> the arm that has looked best so
+    far, or <em>explore</em> an arm whose true quality you're still uncertain about.
+  </p>
+
+  <p>
+    The textbook answers &mdash; $\varepsilon$-greedy, UCB, gradient bandit, optimistic initialization &mdash;
+    each compress this tradeoff into a single scalar knob. They work, but they don't quite answer
+    the question we actually care about:
+  </p>
+
+  <blockquote>
+    Given everything I've seen so far, what is the probability that arm $k$ is the truly best arm?
+  </blockquote>
+
+  <p>
+    That posterior probability is the natural object. If we can track it, we can act on it directly.
+    This post walks through the model, the math, and the resulting policy &mdash; and then puts it head-to-head with the
+    classical baselines.
+  </p>
+
+  <h2>Setup: noisy arms, hidden means</h2>
+  <p>
+    Each arm $k\in\{1,\dots,K\}$ has a true expected reward $\mu_k$ and an intrinsic noise level $\sigma_k$,
+    both unknown to us. Pulling arm $k$ produces a reward
+    $$
+    r_{k,i}\mid\mu_k,\sigma_k^2 \;\sim\; \mathcal N(\mu_k,\sigma_k^2).
+    $$
+    The figure below shows five arms freshly sampled from the environment used in the study. The thick
+    bar marks the latent mean $\mu_k$; the violin shows the spread of rewards you'd actually see.
+    <strong>Re-roll</strong> to see how different the world can look from one instance to the next.
+  </p>
+
+  <figure>
+    <div class="bb-card">
+      <div class="bb-plot-wrap">
+        <svg id="arms-svg" viewBox="0 0 1100 480"></svg>
+      </div>
+    </div>
+    <figcaption>
+      Figure 1: Five sampled arms. Each violin is the reward distribution $\mathcal N(\mu_k,\sigma_k^2)$ for one arm; the
+      horizontal bar is $\mu_k$. The agent never sees the violins &mdash; only individual reward draws from the arms it pulls.
+    </figcaption>
+  </figure>
+  <div id="arms-controls" class="bb-controls l-gutter">
+    <aside class="bb-card">
+      <div class="actions">
+        <button id="arms-resample" class="primary" type="button">Re-roll the arms</button>
+      </div>
+      <p class="stat-line" id="arms-stats"></p>
+      <p class="stat-line" style="color:var(--bb-ink-soft); font-size:12px;">
+        Re-rolling resets all pulls in Figure&nbsp;2 — the three figures share one world.
+      </p>
+    </aside>
+  </div>
+
+  <h2>A posterior over each arm</h2>
+  <p>
+    The Bayesian recipe is the obvious one: put a prior on each arm's $(\mu_k,\sigma_k^2)$, update it with
+    every reward we see, then act on the resulting posterior. The conjugate choice for an unknown-mean,
+    unknown-variance Gaussian is the <em>Normal-Inverse-Gamma</em> prior:
+    $$
+    \sigma_k^2 \sim \mathrm{InvGamma}(\alpha_0,\beta_0),
+    \qquad
+    \mu_k\mid\sigma_k^2 \sim \mathcal N\!\left(\mu_0,\tfrac{\sigma_k^2}{\kappa_0}\right).
+    $$
+    The four hyperparameters $(\mu_0,\kappa_0,\alpha_0,\beta_0)$ encode "what we believe before pulling
+    anything." After observing rewards $D_k=\{r_{k,1},\dots,r_{k,n_k}\}$ with sum $s_k$ and squared-sum
+    $q_k$, conjugacy gives us a closed-form posterior of the same family:
+    $$
+    \kappa_{k,n} = \kappa_0 + n_k,
+    \qquad
+    \mu_{k,n} = \frac{\kappa_0\mu_0 + s_k}{\kappa_0 + n_k},
+    $$
+    $$
+    \alpha_{k,n} = \alpha_0 + \tfrac{n_k}{2},
+    \qquad
+    \beta_{k,n} = \beta_0 + \tfrac12\!\left(q_k + \kappa_0\mu_0^2 - \kappa_{k,n}\mu_{k,n}^2\right).
+    $$
+  </p>
+  <p>
+    What we actually want is the marginal posterior over the latent mean $\mu_k$ &mdash; that's the quantity
+    "is this arm any good?" lives in. Marginalizing $\sigma_k^2$ out of the NIG yields a Student-$t$:
+    $$
+    \mu_k\mid D_k \;\sim\; t_{\nu_{k,n}}\!\left(\mu_{k,n},\,\tau_{k,n}\right),
+    \quad \nu_{k,n}=2\alpha_{k,n},
+    \quad \tau_{k,n}=\sqrt{\tfrac{\beta_{k,n}}{\alpha_{k,n}\kappa_{k,n}}}.
+    $$
+    Pull arms below and watch each posterior tighten around its true mean.
+  </p>
+
+  <figure>
+    <div class="bb-card">
+      <h3>Posterior over each arm's latent mean</h3>
+      <p class="bb-sub">Click an arm to pull it once. Solid orange bars: true $\mu_k$. Blue curves: Student-$t$ posterior over $\mu_k$ given everything pulled so far.</p>
+      <div class="bb-plot-wrap">
+        <svg id="post-svg" viewBox="0 0 1100 460"></svg>
+      </div>
+    </div>
+    <figcaption>
+      Figure 2: As you sample each arm, $\kappa_{k,n}$ grows and the posterior on $\mu_k$ collapses toward $\mu_{k,n}$. Notice how
+      noisier arms (large $\sigma_k$) take more pulls to pin down than quiet ones.
+    </figcaption>
+  </figure>
+  <div id="post-controls" class="bb-controls l-gutter">
+    <aside class="bb-card" style="width: 250.25px">
+      <p class="arm-pulls-label">Pull an arm</p>
+      <div class="arm-pulls" id="arm-pulls"></div>
+      <div class="actions">
+        <button id="post-thompson" class="primary" type="button">Draw best arm (Thompson sample)</button>
+        <button id="post-pull10" type="button">Random pull &times;10</button>
+        <button id="post-reset" type="button">Reset</button>
+      </div>
+      <p class="stat-line" id="post-stats"></p>
+      <hr class="divider">
+      <h4>Prior hyperparameters</h4>
+      <div class="control-row">
+        <label>$\mu_0$:</label>
+        <input id="prior-mu" type="range" min="-2" max="2" step="0.05" value="0">
+        <span id="prior-mu-val" class="value-chip">0.00</span>
+      </div>
+      <div class="control-row">
+        <label>$\kappa_0$:</label>
+        <input id="prior-kappa" type="range" min="0.1" max="5" step="0.05" value="1">
+        <span id="prior-kappa-val" class="value-chip">1.00</span>
+      </div>
+      <div class="control-row">
+        <label>$\alpha_0$:</label>
+        <input id="prior-alpha" type="range" min="1.5" max="10" step="0.1" value="4">
+        <span id="prior-alpha-val" class="value-chip">4.0</span>
+      </div>
+      <div class="control-row">
+        <label>$\beta_0$:</label>
+        <input id="prior-beta" type="range" min="0.25" max="8" step="0.05" value="2">
+        <span id="prior-beta-val" class="value-chip">2.00</span>
+      </div>
+    </aside>
+  </div>
+
+  <h2>The right question to ask</h2>
+  <p>
+    We have a posterior on every arm's latent mean. So far so standard. The Bayesian move is to ask
+    something the classical algorithms never explicitly compute &mdash; the posterior probability that arm
+    $k$ is the best arm:
+    $$
+    \mathbb P(k^\star = k\mid D) \;=\; \mathbb P\!\big(\mu_k\ge \mu_j\;\forall j\ne k\,\big|\,D\big).
+    $$
+    Assuming the posteriors factorize across arms (they do, since each arm only learns from its own
+    pulls), this collapses to a one-dimensional integral:
+    $$
+    \mathbb P(k^\star = k\mid D) \;=\; \int_{-\infty}^{\infty} f_k(x)\!\prod_{j\ne k} F_j(x)\,dx,
+    $$
+    where $f_k$ is arm $k$'s posterior density and $F_j$ are the other arms' CDFs. In words: weight every
+    candidate value $x$ by how plausible it is for arm $k$, times the probability that every other arm
+    is below it.
+  </p>
+  <p>
+    For more than a couple of arms it's faster to estimate this by Monte Carlo. The recipe is the same
+    one Thompson<d-cite key="thompson1933"></d-cite> wrote down in 1933:
+  </p>
+  <ol>
+    <li>For every arm, draw a candidate latent mean $\tilde\mu_k\sim p(\mu_k\mid D_k)$.</li>
+    <li>Whichever arm has the largest sample &mdash; call it the winner of this draw.</li>
+    <li>The fraction of draws that arm $k$ wins is $\widehat{\mathbb P}(k^\star=k\mid D)$.</li>
+  </ol>
+
+  <figure class="l-page-outset">
+    <div class="bb-card">
+      <h3>Probability of being the best, by Monte Carlo</h3>
+      <p class="bb-sub">Each tick on the strip draws one $\tilde\mu_k$ per arm. The bright dot marks the sampled winner; manual pulls from Figure&nbsp;2 mark the chosen lever instead.</p>
+      <div class="bb-plot-wrap">
+        <svg id="mc-strip-svg" viewBox="0 0 1200 240"></svg>
+      </div>
+      <div class="mc-bottom-row">
+        <div class="bb-plot-wrap mc-bars-wrap">
+          <svg id="mc-bars-svg" viewBox="0 0 900 460"></svg>
+        </div>
+        <aside class="bb-card mc-controls-aside">
+          <div class="actions">
+            <button id="mc-toggle" class="primary" type="button">Stream draws</button>
+            <button id="mc-step" type="button">+ 50 draws</button>
+            <button id="mc-reset" type="button">Reset draws</button>
+          </div>
+          <p class="stat-line" id="mc-stats"></p>
+          <hr class="divider">
+          <h4>Pulls so far <span style="font-weight:400;color:var(--bb-ink-soft)">(carries over from Figure 2)</span></h4>
+          <p class="stat-line" id="mc-pulls"></p>
+          <p class="stat-line" style="color:var(--bb-ink-soft); font-size:12px;">
+            Pull more arms in Figure&nbsp;2 to feed this estimator more data &mdash; the posteriors are shared.
+          </p>
+        </aside>
+      </div>
+    </div>
+    <figcaption>
+      Figure 3: A Monte Carlo estimator of $\mathbb P(k^\star=k\mid D)$. Each draw samples one $\tilde\mu_k$ per arm and credits whichever
+      arm came out highest. In the strip, the bright dot is the sampled winner during Thompson sampling, or the chosen lever after a manual Figure&nbsp;2 pull.
+    </figcaption>
+  </figure>
+
+  <h2>The policy: Thompson sampling, almost for free</h2>
+  <p>
+    There's a delightful coincidence in the Monte Carlo recipe: <em>step 1 &amp; step 2 alone are already a
+    reasonable policy</em>. Sample one latent mean per arm, take the winner, pull it. That's
+    Thompson sampling, and the probability of pulling arm $k$ under this policy is exactly
+    $\mathbb P(k^\star=k\mid D)$ &mdash; matching exploration to belief.
+  </p>
+  <p>
+    The implementation in the study softens this slightly with a temperature $T$:
+    $$
+    \pi(k\mid D)\;=\;\frac{\exp(\tilde\mu_k/T)}{\sum_j \exp(\tilde\mu_j/T)},
+    \qquad \tilde\mu_k\sim p(\mu_k\mid D_k).
+    $$
+    As $T\to0$ the softmax becomes an argmax and we recover plain Thompson sampling; large $T$ adds
+    extra exploration on top. In all the sweeps below, $T$ is small.
+  </p>
+
+  <h2>How does it stack up?</h2>
+  <p>
+    Five algorithms, one knob each, swept across powers of two. The benchmark is average reward over
+    the first 1000 steps in the Gaussian k-armed environment from Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.
+  </p>
+  <div class="algo-grid">
+    <div class="algo-card">
+      <h5>$\varepsilon$-greedy</h5>
+      <p class="param">epsilon</p>
+      <p>Exploit the empirical best most of the time, explore uniformly with probability $\varepsilon$.</p>
+    </div>
+    <div class="algo-card">
+      <h5>UCB</h5>
+      <p class="param">c</p>
+      <p>Add an optimism bonus $c\sqrt{\log t / N_k(t)}$ to each empirical mean; pull the arg-max.</p>
+    </div>
+    <div class="algo-card">
+      <h5>Gradient bandit</h5>
+      <p class="param">alpha</p>
+      <p>Learn soft action preferences using reward advantages; sample from the softmax.</p>
+    </div>
+    <div class="algo-card">
+      <h5>Optimistic greedy</h5>
+      <p class="param">Q0</p>
+      <p>Initialize all $Q$-values high so every arm gets pulled at least a few times.</p>
+    </div>
+    <div class="algo-card" style="border-color: var(--bb-orange); background: rgba(255, 140, 0, 0.06);">
+      <h5>Bayesian P(best)</h5>
+      <p class="param" style="color: var(--bb-orange);">kappa, alpha, beta, T</p>
+      <p>Sample $\tilde\mu_k$ from each arm's Student-$t$ posterior; act on the argmax.</p>
+    </div>
+  </div>
+
+  <figure>
+    <div class="bb-card">
+      <div class="bb-plot-wrap">
+        <svg id="param-sweep-svg" viewBox="0 0 1100 520"></svg>
+      </div>
+      <p class="bb-sub" id="param-sweep-readout" style="margin-top:8px;text-align:center;">
+        Hover a curve to see the parameter value and average reward at that point.
+      </p>
+    </div>
+    <figcaption>
+      Figure 4: Average reward over the first 1000 steps as a function of each algorithm's tuned
+      parameter (log-spaced). Each curve sweeps a single hyperparameter; the dot marks each
+      algorithm's best setting. UCB peaks at $c=1$, with Bayesian $\beta_0\!=\!2$ a close second.
+    </figcaption>
+  </figure>
+
+  <p>
+    The numbers, ranked:
+  </p>
+
+  <table class="bb-table">
+    <thead>
+      <tr>
+        <th>Algorithm</th>
+        <th>Tuned parameter</th>
+        <th class="num">Best value</th>
+        <th class="num">Average reward</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>UCB</td>
+        <td><code>c</code></td>
+        <td class="num">1</td>
+        <td class="num"><strong>1.5490</strong></td>
+      </tr>
+      <tr class="highlight">
+        <td>Bayesian P(best)</td>
+        <td><code>beta</code></td>
+        <td class="num">2</td>
+        <td class="num">1.5372</td>
+      </tr>
+      <tr>
+        <td>Optimistic greedy</td>
+        <td><code>Q0</code></td>
+        <td class="num">1</td>
+        <td class="num">1.5125</td>
+      </tr>
+      <tr>
+        <td>Gradient bandit</td>
+        <td><code>alpha</code></td>
+        <td class="num">0.25</td>
+        <td class="num">1.4735</td>
+      </tr>
+      <tr>
+        <td>$\varepsilon$-greedy</td>
+        <td><code>epsilon</code></td>
+        <td class="num">0.0625</td>
+        <td class="num">1.3814</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    UCB wins by $0.0118$. That's not nothing, but it's also not a huge gap given that UCB has decades of
+    tuning behind it and is famously efficient at the cumulative-reward objective. The Bayesian method
+    edges out everything else &mdash; and it does it while answering a richer question.
+  </p>
+
+  <h2>Why UCB still wins on this metric (and where it stops winning)</h2>
+  <p>
+    UCB chooses
+    $$
+    A_t \;=\; \arg\max_k\!\left[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\right].
+    $$
+    It looks Bayesian-ish &mdash; uncertain arms get an optimism bonus &mdash; but it's actually an index policy
+    designed for one specific objective: cumulative regret. It is excellent at that objective, and the
+    sweep reflects this.
+  </p>
+
+  <p>
+    Bayesian P(best) optimizes a different thing. Two metrics worth thinking about:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Recommendation accuracy:</strong> after $T$ pulls, did we identify the true best arm?
+      $\mathbf 1\{\hat k_T = k^\star\}$.
+    </li>
+    <li>
+      <strong>Simple regret:</strong> $\mu_{k^\star} - \mu_{\hat k_T}$ &mdash; how much expected reward
+      our final recommendation leaves on the table.
+    </li>
+  </ul>
+
+  <p>
+    Both are best-arm-identification objectives, and both are exactly what
+    $\mathbb P(k^\star=k\mid D)$ is computing. UCB doesn't even maintain that quantity. So while UCB
+    will beat us on the cumulative-reward leaderboard, the Bayesian method gives us a calibrated answer
+    to the question we usually <em>actually</em> care about once the experiment is over: which arm should
+    we ship?
+  </p>
+
+  <h2>Aleatoric vs. epistemic, falling out of the math</h2>
+  <p>
+    One more thing the NIG posterior gives us almost for free. The predictive variance of the next
+    reward decomposes as
+    $$
+    \mathrm{Var}(R_{k,n+1}\mid D_k)
+    \;=\;
+    \underbrace{\frac{\beta_{k,n}}{\alpha_{k,n}-1}}_{\text{aleatoric}}
+    \;+\;
+    \underbrace{\frac{1}{\kappa_{k,n}}\!\cdot\!\frac{\beta_{k,n}}{\alpha_{k,n}-1}}_{\text{epistemic}}.
+    $$
+    The first term is irreducible reward noise &mdash; we'd see it even if we knew the arm perfectly. The
+    second shrinks as $1/\kappa_{k,n}=1/(\kappa_0+n_k)$, i.e. with every pull. <em>Exploration should
+    chase the second term, not the first.</em> A noisy arm isn't necessarily an uncertain arm. The
+    classical baselines blur this distinction; the Bayesian one gets it for free.
+  </p>
+
+  <h2>Closing thoughts</h2>
+  <p>
+    The original repository<d-footnote>This whole post is a writeup of a weekend project where the
+    math was largely AI-generated and the code was AI-written, with the human in the loop for ideas,
+    direction, and verification.</d-footnote> wasn't trying to invent anything new &mdash; the core idea is
+    just Thompson sampling, going back to 1933. What the project does demonstrate is that the
+    fully-Bayesian, posterior-over-arm-quality framing is competitive with carefully tuned UCB on the
+    cumulative-reward sweep, and is more directly aligned with the best-arm-identification questions
+    we usually want to answer.
+  </p>
+  <p>
+    More importantly, every quantity in this post had a clean closed form: posterior parameters,
+    Student-$t$ marginals, predictive distributions, even the decomposition of uncertainty.
+    When the model is right, the math just falls out.
+  </p>
+
+</d-article>
+
+<d-appendix>
+  <h3>Acknowledgements</h3>
+  <p>
+    The Bayesian sampling-the-winner idea is closely related to Thompson sampling and posterior
+    probability matching, going back to W.&nbsp;R.&nbsp;Thompson's 1933 paper<d-cite key="thompson1933"></d-cite>
+    and recent treatments like Russo et al.'s tutorial<d-cite key="russo2018tutorial"></d-cite>. The
+    best-arm-identification framing &mdash; where the posterior probability of being optimal is the object
+    of interest &mdash; has been studied extensively in the Bayesian best-arm-identification
+    literature<d-cite key="russo2016bestarm"></d-cite><d-cite key="guha2014thompson"></d-cite>.
+  </p>
+
+  <h3>Contact</h3>
+  <p>
+    Email: <a href="mailto:francesco215@live.it">francesco215@live.it</a> &middot; Discord: <code>sacco215</code> &middot; Code: <a href="https://github.com/Francesco215/Bayes-bandit">github.com/Francesco215/Bayes-bandit</a>
+  </p>
+
+  <h3>Citation</h3>
+  <p>For attribution in academic contexts, please cite this work as</p>
+  <pre class="citation-short">Sacco, "The Bayes Bandit", 2025</pre>
+  <p>BibTeX:</p>
+  <pre class="citation-short">@article{sacco2025bayesbandit,
+  author = {Sacco, Francesco},
+  title  = {The Bayes Bandit},
+  year   = {2025},
+  url    = {https://github.com/Francesco215/Bayes-bandit}
+}</pre>
+
+  <h3>References</h3>
+  <d-bibliography>
+    <script type="text/bibtex">
+      @article{thompson1933,
+        title   = {On the likelihood that one unknown probability exceeds another in view of the evidence of two samples},
+        author  = {Thompson, William R.},
+        journal = {Biometrika},
+        volume  = {25},
+        number  = {3-4},
+        pages   = {285--294},
+        year    = {1933}
+      }
+      @article{russo2018tutorial,
+        title   = {A tutorial on {Thompson} sampling},
+        author  = {Russo, Daniel J. and Van Roy, Benjamin and Kazerouni, Abbas and Osband, Ian and Wen, Zheng},
+        journal = {Foundations and Trends in Machine Learning},
+        year    = {2018}
+      }
+      @inproceedings{russo2016bestarm,
+        title     = {Simple {Bayesian} algorithms for best arm identification},
+        author    = {Russo, Daniel},
+        booktitle = {Conference on Learning Theory (COLT)},
+        year      = {2016}
+      }
+      @inproceedings{guha2014thompson,
+        title     = {Stochastic regret minimization via {Thompson} sampling},
+        author    = {Guha, Sudipto and Munagala, Kamesh},
+        booktitle = {Conference on Learning Theory (COLT)},
+        year      = {2014}
+      }
+      @book{suttonbarto,
+        title     = {Reinforcement Learning: An Introduction},
+        author    = {Sutton, Richard S. and Barto, Andrew G.},
+        publisher = {MIT Press},
+        edition   = {2nd},
+        year      = {2018}
+      }
+    </script>
+  </d-bibliography>
+</d-appendix>
+
+<script>
+/* The Bayes Bandit — interactive figures
+ * ---------------------------------------
+ * Three D3-based widgets:
+ *   #arms-svg : violin plot of true reward distributions (Figure 1)
+ *   #post-svg : Student-t posteriors over each arm's latent mean (Figure 2)
+ *   #mc-svg   : Monte Carlo estimator of P(k* = k | D)              (Figure 3)
+ * Figures 2 & 3 share state — pulling arms in Fig 2 updates Fig 3.
+ */
+
+(function () {
+  "use strict";
+
+  /* ---------------- shared math helpers ---------------- */
+
+  function randn() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  // Gamma(shape) sampler (Marsaglia-Tsang) for shape >= 1; recurse otherwise.
+  function gammaSample(shape) {
+    if (shape < 1) {
+      const u = Math.random();
+      return gammaSample(shape + 1) * Math.pow(u, 1 / shape);
+    }
+    const d = shape - 1 / 3;
+    const c = 1 / Math.sqrt(9 * d);
+    while (true) {
+      let x, v;
+      do {
+        x = randn();
+        v = 1 + c * x;
+      } while (v <= 0);
+      v = v * v * v;
+      const u = Math.random();
+      if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+      if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+    }
+  }
+
+  // Student-t sample with nu d.o.f., location loc, scale tau.
+  function studentTSample(nu, loc, tau) {
+    // t = z / sqrt(g/nu) where z ~ N(0,1), g ~ chi^2_nu = 2 * Gamma(nu/2)
+    const z = randn();
+    const g = 2 * gammaSample(nu / 2);
+    return loc + tau * z / Math.sqrt(g / nu);
+  }
+
+  // Student-t pdf, density of t_nu(loc, tau)
+  function studentTPdf(x, nu, loc, tau) {
+    const z = (x - loc) / tau;
+    // log gamma via Lanczos
+    const num = Math.exp(lgamma((nu + 1) / 2));
+    const den = Math.sqrt(nu * Math.PI) * Math.exp(lgamma(nu / 2)) * tau;
+    return num / den * Math.pow(1 + z * z / nu, -(nu + 1) / 2);
+  }
+
+  function lgamma(z) {
+    const g = 7;
+    const c = [
+      0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+      771.32342877765313, -176.61502916214059, 12.507343278686905,
+      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+    ];
+    if (z < 0.5) {
+      return Math.log(Math.PI / Math.sin(Math.PI * z)) - lgamma(1 - z);
+    }
+    z -= 1;
+    let x = c[0];
+    for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+    const t = z + g + 0.5;
+    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+  }
+
+  // Normal pdf
+  function normPdf(x, mu, sigma) {
+    const z = (x - mu) / sigma;
+    return Math.exp(-0.5 * z * z) / (sigma * Math.sqrt(2 * Math.PI));
+  }
+
+  /* ---------------- arm palette ---------------- */
+  const ARM_COLORS = [
+    "#7aa6ff", // light blue
+    "#7e6ad7", // purple
+    "#d63b76", // pink
+    "#f07a26", // orange
+    "#f1b840"  // yellow
+  ];
+  const K = 5;
+
+  /* ---------------- world generation ---------------- */
+  function makeWorld(opts) {
+    const muScale = opts.muScale ?? 1.0;
+    const sigMin = opts.sigMin ?? 0.5;
+    const sigMax = opts.sigMax ?? 1.5;
+    const arms = [];
+    for (let k = 0; k < K; k++) {
+      const mu = muScale * randn();
+      const sigma = sigMin + (sigMax - sigMin) * Math.random();
+      arms.push({ mu, sigma });
+    }
+    return arms;
+  }
+
+  /* ============================================================
+     SHARED STATE — used by all three figures
+     ============================================================ */
+  const sharedState = {
+    arms: makeWorld({ muScale: 1.0, sigMin: 0.5, sigMax: 1.5 }),
+    pulls: Array(K).fill(null).map(() => ({ n: 0, s: 0, q: 0 })),
+    listeners: [],
+    mcDrawListeners: []
+  };
+
+  function priorParams() {
+    return {
+      mu0: parseFloat(document.getElementById("prior-mu").value),
+      kappa0: parseFloat(document.getElementById("prior-kappa").value),
+      alpha0: parseFloat(document.getElementById("prior-alpha").value),
+      beta0: parseFloat(document.getElementById("prior-beta").value)
+    };
+  }
+
+  function posteriorParams(k) {
+    const { mu0, kappa0, alpha0, beta0 } = priorParams();
+    const { n, s, q } = sharedState.pulls[k];
+    const kappaN = kappa0 + n;
+    const muN = (kappa0 * mu0 + s) / kappaN;
+    const alphaN = alpha0 + n / 2;
+    const betaN = beta0 + 0.5 * (q + kappa0 * mu0 * mu0 - kappaN * muN * muN);
+    const nu = 2 * alphaN;
+    const tau = Math.sqrt(Math.max(betaN, 1e-9) / (alphaN * kappaN));
+    return { kappaN, muN, alphaN, betaN, nu, tau };
+  }
+
+  // Thompson sampling: draw one µ̃_k per arm, return the argmax + the samples.
+  function thompsonDraw() {
+    const samples = sharedState.arms.map((_, k) => {
+      const pp = posteriorParams(k);
+      return studentTSample(pp.nu, pp.muN, pp.tau);
+    });
+    let best = 0;
+    for (let i = 1; i < K; i++) if (samples[i] > samples[best]) best = i;
+    return { samples, best };
+  }
+
+  function notifyMonteCarloDraw(draw, highlight, source) {
+    sharedState.mcDrawListeners.forEach(fn => fn({
+      samples: draw.samples,
+      winner: draw.best,
+      highlight,
+      source
+    }));
+  }
+
+  function pullArm(k) {
+    const { mu, sigma } = sharedState.arms[k];
+    const r = mu + sigma * randn();
+    const p = sharedState.pulls[k];
+    p.n += 1;
+    p.s += r;
+    p.q += r * r;
+    notify();
+  }
+
+  function pullArmFromPosteriorDemo(k) {
+    const draw = thompsonDraw();
+    pullArm(k);
+    notifyMonteCarloDraw(draw, k, "manual");
+  }
+
+  // The "Draw best arm" / streaming policy step:
+  //   1. Thompson-draw a winner.
+  //   2. Actually pull that winner (sampling state changes the world).
+  // Returns the draw payload so the MC widget can render the strip.
+  function policyStep() {
+    const draw = thompsonDraw();
+    pullArm(draw.best); // this calls notify()
+    return draw;
+  }
+
+  function policyStepWithMonteCarloTrace() {
+    const draw = policyStep();
+    notifyMonteCarloDraw(draw, draw.best, "policy");
+    return draw;
+  }
+
+  function resetPulls() {
+    sharedState.pulls = Array(K).fill(null).map(() => ({ n: 0, s: 0, q: 0 }));
+    notify();
+  }
+
+  function newWorld() {
+    sharedState.arms = makeWorld({ muScale: 1.0, sigMin: 0.5, sigMax: 1.5 });
+    resetPulls();
+  }
+
+  function notify() {
+    sharedState.listeners.forEach(fn => fn());
+  }
+
+  /* ============================================================
+     Figure 1 — sampled arm violin plot
+     ============================================================ */
+  (function armsFigure() {
+    const svg = d3.select("#arms-svg");
+    if (svg.empty()) return;
+    const W = 1100, H = 480;
+    const margin = { top: 28, right: 24, bottom: 48, left: 60 };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+
+    const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleBand().domain(d3.range(K)).range([0, innerW]).padding(0.35);
+    const yScale = d3.scaleLinear().domain([-4.5, 4.5]).range([innerH, 0]);
+
+    // Axes
+    root.append("g")
+      .attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(xScale).tickFormat(d => `arm ${d + 1}`))
+      .call(g => g.selectAll("text").attr("font-size", 13));
+    root.append("g")
+      .call(d3.axisLeft(yScale).ticks(7))
+      .call(g => g.selectAll("text").attr("font-size", 12));
+
+    // Axis titles
+    root.append("text")
+      .attr("transform", `translate(${innerW/2},${innerH + 36})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Arm");
+    root.append("text")
+      .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Reward distribution");
+
+    // Zero line
+    root.append("line")
+      .attr("x1", 0).attr("x2", innerW)
+      .attr("y1", yScale(0)).attr("y2", yScale(0))
+      .attr("stroke", "#999")
+      .attr("stroke-dasharray", "4 4");
+
+    const violinLayer = root.append("g");
+
+    function drawViolins() {
+      const arms = sharedState.arms;
+      const groups = violinLayer.selectAll("g.violin").data(arms);
+      groups.exit().remove();
+      const enter = groups.enter().append("g").attr("class", "violin");
+      const merged = enter.merge(groups)
+        .attr("transform", (_, i) => `translate(${xScale(i)},0)`);
+
+      merged.each(function (arm, i) {
+        const g = d3.select(this);
+        g.selectAll("*").remove();
+        const bw = xScale.bandwidth();
+        const bx = bw / 2;
+
+        const ys = d3.range(80).map(j => -4.5 + (9 * j) / 79);
+        const dens = ys.map(y => normPdf(y, arm.mu, arm.sigma));
+        const maxDens = d3.max(dens);
+        const halfWidth = bw / 2;
+
+        const violinPath = d3.area()
+          .x0(d => bx - (d.dens / maxDens) * halfWidth)
+          .x1(d => bx + (d.dens / maxDens) * halfWidth)
+          .y(d => yScale(d.y))
+          .curve(d3.curveBasis);
+
+        g.append("path")
+          .datum(ys.map((y, j) => ({ y, dens: dens[j] })))
+          .attr("d", violinPath)
+          .attr("fill", ARM_COLORS[i])
+          .attr("opacity", 0.85)
+          .attr("stroke", ARM_COLORS[i])
+          .attr("stroke-opacity", 0.7);
+
+        g.append("line")
+          .attr("x1", bx - halfWidth * 0.55)
+          .attr("x2", bx + halfWidth * 0.55)
+          .attr("y1", yScale(arm.mu))
+          .attr("y2", yScale(arm.mu))
+          .attr("stroke", "#222")
+          .attr("stroke-width", 2);
+
+        g.append("text")
+          .attr("x", bx + halfWidth * 0.6 + 4)
+          .attr("y", yScale(arm.mu) + 4)
+          .attr("font-size", 12)
+          .attr("font-style", "italic")
+          .text(`μ${i + 1} = ${arm.mu.toFixed(2)}`);
+      });
+    }
+
+    const statsEl = document.getElementById("arms-stats");
+    function refreshStats() {
+      const arms = sharedState.arms;
+      const best = arms.reduce((b, a, i) => (a.mu > arms[b].mu ? i : b), 0);
+      if (statsEl) statsEl.textContent = `Best arm in this world: arm ${best + 1} (μ = ${arms[best].mu.toFixed(2)})`;
+    }
+
+    document.getElementById("arms-resample").addEventListener("click", () => newWorld());
+
+    sharedState.listeners.push(() => { drawViolins(); refreshStats(); });
+    drawViolins();
+    refreshStats();
+  })();
+
+  /* ============================================================
+     Figure 2 — posteriors over latent means
+     ============================================================ */
+  (function posteriorFigure() {
+    const svg = d3.select("#post-svg");
+    if (svg.empty()) return;
+    const W = 1100, H = 460;
+    const margin = { top: 28, right: 24, bottom: 50, left: 60 };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+    const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleLinear().domain([-4, 4]).range([0, innerW]);
+    const yScale = d3.scaleLinear().domain([0, 1.6]).range([innerH, 0]);
+
+    root.append("g")
+      .attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(xScale).ticks(9))
+      .call(g => g.selectAll("text").attr("font-size", 12));
+    root.append("g")
+      .call(d3.axisLeft(yScale).ticks(5))
+      .call(g => g.selectAll("text").attr("font-size", 12));
+
+    root.append("text")
+      .attr("transform", `translate(${innerW/2},${innerH + 38})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Latent mean μₖ");
+    root.append("text")
+      .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Posterior density");
+
+    const trueLayer = root.append("g");
+    const postLayer = root.append("g");
+
+    const pullsBox = document.getElementById("arm-pulls");
+    const statsEl = document.getElementById("post-stats");
+
+    // Build the 5 arm-pull buttons
+    for (let k = 0; k < K; k++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.arm = k;
+      btn.innerHTML = `
+        <span class="arm-bar" style="background:${ARM_COLORS[k]}"></span>
+        <span class="arm-num">${k + 1}</span>
+        <span class="arm-n" data-armn="${k}">0</span>`;
+      btn.addEventListener("click", () => pullArmFromPosteriorDemo(k));
+      pullsBox.appendChild(btn);
+    }
+
+    function draw() {
+      // True mean rules
+      const trueSel = trueLayer.selectAll("line.truebar").data(sharedState.arms);
+      trueSel.enter().append("line").attr("class", "truebar")
+        .merge(trueSel)
+        .attr("x1", d => xScale(d.mu))
+        .attr("x2", d => xScale(d.mu))
+        .attr("y1", 0)
+        .attr("y2", innerH)
+        .attr("stroke", (_, i) => ARM_COLORS[i])
+        .attr("stroke-width", 2)
+        .attr("opacity", 0.55);
+      trueSel.exit().remove();
+
+      const trueLab = trueLayer.selectAll("text.truelab").data(sharedState.arms);
+      trueLab.enter().append("text").attr("class", "truelab")
+        .merge(trueLab)
+        .attr("x", d => xScale(d.mu) + 4)
+        .attr("y", (_, i) => 14 + i * 14)
+        .attr("font-size", 11)
+        .attr("font-style", "italic")
+        .attr("fill", (_, i) => ARM_COLORS[i])
+        .text((d, i) => `μ${i + 1}*`);
+      trueLab.exit().remove();
+
+      // Posterior densities
+      const xs = d3.range(220).map(i => -4 + (8 * i) / 219);
+      const allPosts = sharedState.arms.map((_, k) => {
+        const pp = posteriorParams(k);
+        return xs.map(x => ({ x, y: studentTPdf(x, pp.nu, pp.muN, pp.tau) }));
+      });
+      // dynamic y-domain: cap at 2 so weak posteriors still show
+      const maxY = Math.min(2.5, d3.max(allPosts.flat(), d => d.y) || 1.0);
+      yScale.domain([0, Math.max(0.6, maxY * 1.05)]);
+      root.select("g:nth-of-type(2)").call(d3.axisLeft(yScale).ticks(5))
+        .selectAll("text").attr("font-size", 12);
+
+      const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y)).curve(d3.curveBasis);
+      const area = d3.area().x(d => xScale(d.x)).y0(yScale(0)).y1(d => yScale(d.y)).curve(d3.curveBasis);
+
+      const fillSel = postLayer.selectAll("path.postfill").data(allPosts);
+      fillSel.enter().append("path").attr("class", "postfill")
+        .merge(fillSel)
+        .attr("d", area)
+        .attr("fill", (_, i) => ARM_COLORS[i])
+        .attr("opacity", 0.18);
+      fillSel.exit().remove();
+
+      const lineSel = postLayer.selectAll("path.postline").data(allPosts);
+      lineSel.enter().append("path").attr("class", "postline")
+        .merge(lineSel)
+        .attr("d", line)
+        .attr("fill", "none")
+        .attr("stroke", (_, i) => ARM_COLORS[i])
+        .attr("stroke-width", 2);
+      lineSel.exit().remove();
+
+      // Update n counts on buttons
+      for (let k = 0; k < K; k++) {
+        const el = document.querySelector(`[data-armn="${k}"]`);
+        if (el) el.textContent = `${sharedState.pulls[k].n}`;
+      }
+
+      const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
+      const best = sharedState.arms.reduce((b, a, i) => (a.mu > sharedState.arms[b].mu ? i : b), 0);
+      statsEl.textContent = `Total pulls: ${totalN} · True best: arm ${best + 1} (μ = ${sharedState.arms[best].mu.toFixed(2)})`;
+    }
+
+    // Listeners
+    sharedState.listeners.push(draw);
+    document.getElementById("post-thompson").addEventListener("click", () => policyStepWithMonteCarloTrace());
+    document.getElementById("post-pull10").addEventListener("click", () => {
+      for (let i = 0; i < 10; i++) pullArm(Math.floor(Math.random() * K));
+    });
+    document.getElementById("post-reset").addEventListener("click", () => resetPulls());
+
+    ["prior-mu", "prior-kappa", "prior-alpha", "prior-beta"].forEach(id => {
+      const el = document.getElementById(id);
+      const valEl = document.getElementById(`${id}-val`);
+      el.addEventListener("input", () => {
+        const v = parseFloat(el.value);
+        valEl.textContent = (id === "prior-alpha") ? v.toFixed(1) : v.toFixed(2);
+        draw();
+        // also tickle MC fig
+        notify();
+      });
+    });
+
+    draw();
+  })();
+
+  /* ============================================================
+     Figure 3 — Monte Carlo P(best)
+     ============================================================ */
+  (function mcFigure() {
+    const stripSvg = d3.select("#mc-strip-svg");
+    const barsSvg = d3.select("#mc-bars-svg");
+    if (stripSvg.empty() || barsSvg.empty()) return;
+
+    // ----- Strip (top, full width) -----
+    const SW = 1200, SH = 240;
+    const sm = { top: 22, right: 24, bottom: 42, left: 60 };
+    const stripInnerW = SW - sm.left - sm.right;
+    const stripInnerH = SH - sm.top - sm.bottom;
+    const stripRoot = stripSvg.append("g").attr("transform", `translate(${sm.left},${sm.top})`);
+
+    const stripX = d3.scaleLinear().domain([0, 200]).range([0, stripInnerW]);
+    const stripY = d3.scaleLinear().domain([-4, 4]).range([stripInnerH, 0]);
+
+    const stripXAxisG = stripRoot.append("g")
+      .attr("transform", `translate(0,${stripInnerH})`)
+      .call(d3.axisBottom(stripX).ticks(6))
+      .call(g => g.selectAll("text").attr("font-size", 11));
+    stripRoot.append("g")
+      .call(d3.axisLeft(stripY).ticks(5))
+      .call(g => g.selectAll("text").attr("font-size", 11));
+    stripRoot.append("text")
+      .attr("transform", `translate(${stripInnerW/2},${stripInnerH + 32})`)
+      .attr("text-anchor", "middle").attr("font-size", 12)
+      .text("Most recent 200 Thompson draws");
+    stripRoot.append("text")
+      .attr("transform", `translate(-44,${stripInnerH/2}) rotate(-90)`)
+      .attr("text-anchor", "middle").attr("font-size", 12)
+      .text("Sampled μ̃ₖ");
+    const dotsLayer = stripRoot.append("g");
+
+    // ----- Bars (bottom-left) -----
+    const BW = 900, BH = 460;
+    const bm = { top: 28, right: 20, bottom: 56, left: 70 };
+    const barInnerW = BW - bm.left - bm.right;
+    const barInnerH = BH - bm.top - bm.bottom;
+    const barRoot = barsSvg.append("g").attr("transform", `translate(${bm.left},${bm.top})`);
+
+    const barX = d3.scaleBand().domain(d3.range(K)).range([0, barInnerW]).padding(0.25);
+    const barY = d3.scaleLinear().domain([0, 1]).range([barInnerH, 0]);
+    barRoot.append("g")
+      .attr("transform", `translate(0,${barInnerH})`)
+      .call(d3.axisBottom(barX).tickFormat(d => `arm ${d + 1}`))
+      .call(g => g.selectAll("text").attr("font-size", 14));
+    barRoot.append("g")
+      .call(d3.axisLeft(barY).ticks(5).tickFormat(d3.format(".0%")))
+      .call(g => g.selectAll("text").attr("font-size", 13));
+    barRoot.append("text")
+      .attr("transform", `translate(${barInnerW/2},${barInnerH + 44})`)
+      .attr("text-anchor", "middle").attr("font-size", 14)
+      .text("P(k* = k | D)");
+
+    const barsLayer = barRoot.append("g");
+    const barLabels = barRoot.append("g");
+
+    // State
+    let draws = [];
+    let wins = Array(K).fill(0);
+    let totalDraws = 0;
+    let timer = null;
+
+    const statsEl = document.getElementById("mc-stats");
+    const pullsEl = document.getElementById("mc-pulls");
+
+    function recordDrawEvent(event) {
+      wins[event.winner] += 1;
+      totalDraws += 1;
+      draws.push({
+        idx: totalDraws,
+        samples: event.samples,
+        winner: event.winner,
+        highlight: event.highlight,
+        source: event.source
+      });
+      if (draws.length > 200) draws.shift();
+    }
+
+    function doDraw() {
+      policyStepWithMonteCarloTrace();
+    }
+
+    function draw() {
+      // strip
+      const minIdx = Math.max(1, totalDraws - 199);
+      stripX.domain([minIdx, Math.max(minIdx + 199, totalDraws)]);
+      stripXAxisG.call(d3.axisBottom(stripX).ticks(6))
+        .selectAll("text").attr("font-size", 11);
+
+      const drawGroups = dotsLayer.selectAll("g.mc-draw").data(draws, d => d.idx);
+      drawGroups.exit().remove();
+      const drawGroupsMerged = drawGroups.enter().append("g")
+        .attr("class", "mc-draw")
+        .merge(drawGroups)
+        .attr("transform", d => `translate(${stripX(d.idx)},0)`);
+
+      drawGroupsMerged.each(function (d) {
+        const g = d3.select(this);
+        const sampleDots = g.selectAll("circle").data(
+          d.samples.map((value, arm) => ({ value, arm })),
+          s => s.arm
+        );
+        sampleDots.exit().remove();
+        sampleDots.enter().append("circle")
+          .merge(sampleDots)
+          .attr("cx", 0)
+          .attr("cy", s => stripY(Math.max(-4, Math.min(4, s.value))))
+          .attr("r", s => s.arm === d.highlight ? 4.6 : 2.8)
+          .attr("fill", s => ARM_COLORS[s.arm])
+          .attr("stroke", s => s.arm === d.highlight ? "#222" : "none")
+          .attr("stroke-width", s => s.arm === d.highlight ? 1 : 0)
+          .attr("opacity", s => s.arm === d.highlight ? 0.98 : 0.24);
+      });
+
+      // bars
+      const probs = wins.map(w => totalDraws > 0 ? w / totalDraws : 0);
+      const bars = barsLayer.selectAll("rect").data(probs);
+      bars.enter().append("rect")
+        .merge(bars)
+        .attr("x", (_, i) => barX(i))
+        .attr("y", d => barY(d))
+        .attr("width", barX.bandwidth())
+        .attr("height", d => barInnerH - barY(d))
+        .attr("fill", (_, i) => ARM_COLORS[i])
+        .attr("opacity", 0.85);
+      bars.exit().remove();
+
+      const labels = barLabels.selectAll("text").data(probs);
+      labels.enter().append("text")
+        .merge(labels)
+        .attr("x", (_, i) => barX(i) + barX.bandwidth() / 2)
+        .attr("y", d => barY(d) - 8)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 14)
+        .attr("font-weight", 600)
+        .attr("font-variant-numeric", "tabular-nums")
+        .attr("fill", "#222")
+        .text(d => totalDraws > 0 ? (d * 100).toFixed(0) + "%" : "—");
+      labels.exit().remove();
+
+      // text
+      statsEl.textContent = totalDraws > 0
+        ? `Total draws: ${totalDraws}`
+        : "No draws yet — click below to start sampling.";
+
+      const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
+      const perArm = sharedState.pulls.map((p, i) => `arm${i+1}=${p.n}`).join(" · ");
+      pullsEl.textContent = `Total: ${totalN} · ${perArm}`;
+    }
+
+    function resetDraws() {
+      draws = [];
+      wins = Array(K).fill(0);
+      totalDraws = 0;
+      draw();
+    }
+
+    function stopStream() {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+        document.getElementById("mc-toggle").textContent = "Stream draws";
+      }
+    }
+
+    document.getElementById("mc-toggle").addEventListener("click", function () {
+      if (timer === null) {
+        timer = setInterval(() => {
+          doDraw();
+          draw();
+        }, 200);
+        this.textContent = "Pause stream";
+      } else {
+        stopStream();
+      }
+    });
+    document.getElementById("mc-step").addEventListener("click", () => {
+      for (let i = 0; i < 50; i++) doDraw();
+      draw();
+    });
+    document.getElementById("mc-reset").addEventListener("click", () => {
+      stopStream();
+      resetDraws();
+    });
+
+    sharedState.mcDrawListeners.push(event => {
+      recordDrawEvent(event);
+      draw();
+    });
+
+    // Reset MC tally when the world or prior changes (NOT on every pull —
+    // that would wipe the strip while streaming the policy).
+    document.getElementById("arms-resample").addEventListener("click", () => resetDraws());
+    document.getElementById("post-reset").addEventListener("click", () => resetDraws());
+    ["prior-mu", "prior-kappa", "prior-alpha", "prior-beta"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => resetDraws());
+    });
+
+    // Re-render bars/strip whenever pulls change (without resetting tally).
+    sharedState.listeners.push(() => { draw(); });
+
+    draw();
+  })();
+
+  /* ============================================================
+     Figure 4 — Parameter sweep (Sutton-Barto style)
+     ============================================================ */
+  (function paramSweepFigure() {
+    const svg = d3.select("#param-sweep-svg");
+    if (svg.empty()) return;
+
+    const data = [
+      { algo: "epsilon-greedy",   param: "ε",   color: "#7aa6ff", points: [
+        [0.0078125, 1.2036], [0.015625, 1.2536], [0.03125, 1.3293],
+        [0.0625, 1.3814], [0.125, 1.3210], [0.25, 1.1555],
+      ]},
+      { algo: "gradient bandit",  param: "α",   color: "#7e6ad7", points: [
+        [0.03125, 1.1570], [0.0625, 1.3538], [0.125, 1.4527],
+        [0.25, 1.4735], [0.5, 1.4149], [1.0, 1.2436], [2.0, 1.0574],
+      ]},
+      { algo: "optimistic greedy",param: "Q₀",  color: "#d63b76", points: [
+        [0.25, 1.3421], [0.5, 1.4346], [1.0, 1.5125],
+        [2.0, 1.4701], [4.0, 1.3828],
+      ]},
+      { algo: "UCB",              param: "c",   color: "#3764e6", points: [
+        [0.0625, 1.4847], [0.125, 1.4839], [0.25, 1.5106],
+        [0.5, 1.5401], [1.0, 1.5490], [2.0, 1.4567], [4.0, 1.2227],
+      ]},
+      { algo: "Bayesian P(best)", param: "β₀",  color: "#e67814", points: [
+        [0.125, 1.3332], [0.25, 1.4418], [0.5, 1.5117],
+        [1.0, 1.5332], [2.0, 1.5372], [4.0, 1.5220],
+        [8.0, 1.4917], [16.0, 1.4594],
+      ]},
+    ];
+
+    const W = 1100, H = 520;
+    const margin = { top: 30, right: 220, bottom: 60, left: 70 };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+    const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xMin = d3.min(data, d => d3.min(d.points, p => p[0]));
+    const xMax = d3.max(data, d => d3.max(d.points, p => p[0]));
+    const x = d3.scaleLog().domain([xMin, xMax]).range([0, innerW]);
+    const y = d3.scaleLinear().domain([1.0, 1.6]).range([innerH, 0]);
+
+    // Grid lines (light)
+    const xTicks = [1/128, 1/64, 1/32, 1/16, 1/8, 1/4, 1/2, 1, 2, 4, 8, 16];
+    root.append("g").attr("class", "gridx")
+      .selectAll("line").data(xTicks).enter().append("line")
+      .attr("x1", d => x(d)).attr("x2", d => x(d))
+      .attr("y1", 0).attr("y2", innerH)
+      .attr("stroke", "#e9ecef").attr("stroke-width", 1);
+    const yTicks = d3.range(1.0, 1.61, 0.1);
+    root.append("g").attr("class", "gridy")
+      .selectAll("line").data(yTicks).enter().append("line")
+      .attr("x1", 0).attr("x2", innerW)
+      .attr("y1", d => y(d)).attr("y2", d => y(d))
+      .attr("stroke", "#e9ecef").attr("stroke-width", 1);
+
+    // Axes
+    const xLabels = { 0.0078125: "1/128", 0.015625: "1/64", 0.03125: "1/32",
+      0.0625: "1/16", 0.125: "1/8", 0.25: "1/4", 0.5: "1/2",
+      1: "1", 2: "2", 4: "4", 8: "8", 16: "16" };
+    root.append("g")
+      .attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(x).tickValues(xTicks).tickFormat(d => xLabels[d] || d))
+      .call(g => g.selectAll("text").attr("font-size", 12))
+      .call(g => g.select(".domain").attr("stroke", "#888"));
+    root.append("g")
+      .call(d3.axisLeft(y).ticks(7).tickFormat(d3.format(".1f")))
+      .call(g => g.selectAll("text").attr("font-size", 12))
+      .call(g => g.select(".domain").attr("stroke", "#888"));
+
+    root.append("text")
+      .attr("x", innerW / 2).attr("y", innerH + 46)
+      .attr("text-anchor", "middle").attr("font-size", 13)
+      .attr("fill", "#444")
+      .text("Hyperparameter value (log scale) — ε / α / Q₀ / c / β₀");
+    root.append("text")
+      .attr("transform", `translate(-50,${innerH/2}) rotate(-90)`)
+      .attr("text-anchor", "middle").attr("font-size", 13)
+      .attr("fill", "#444")
+      .text("Average reward over first 1000 steps");
+
+    const line = d3.line()
+      .x(p => x(p[0]))
+      .y(p => y(p[1]))
+      .curve(d3.curveMonotoneX);
+
+    // Curves
+    const seriesG = root.append("g");
+    data.forEach(s => {
+      const g = seriesG.append("g").attr("data-algo", s.algo);
+      g.append("path")
+        .datum(s.points)
+        .attr("fill", "none")
+        .attr("stroke", s.color)
+        .attr("stroke-width", 2.4)
+        .attr("stroke-linecap", "round")
+        .attr("stroke-linejoin", "round")
+        .attr("d", line);
+      g.selectAll("circle")
+        .data(s.points).enter().append("circle")
+        .attr("cx", d => x(d[0]))
+        .attr("cy", d => y(d[1]))
+        .attr("r", 3.2)
+        .attr("fill", s.color)
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 1);
+
+      // Best-point ring
+      const best = s.points.reduce((a, b) => b[1] > a[1] ? b : a);
+      g.append("circle")
+        .attr("cx", x(best[0])).attr("cy", y(best[1]))
+        .attr("r", 7).attr("fill", "none")
+        .attr("stroke", s.color).attr("stroke-width", 2);
+    });
+
+    // Right-side legend with best values
+    const legend = svg.append("g")
+      .attr("transform", `translate(${margin.left + innerW + 22},${margin.top + 6})`);
+    data.forEach((s, i) => {
+      const best = s.points.reduce((a, b) => b[1] > a[1] ? b : a);
+      const row = legend.append("g").attr("transform", `translate(0,${i * 36})`);
+      row.append("line")
+        .attr("x1", 0).attr("x2", 22)
+        .attr("y1", 6).attr("y2", 6)
+        .attr("stroke", s.color).attr("stroke-width", 3)
+        .attr("stroke-linecap", "round");
+      row.append("circle")
+        .attr("cx", 11).attr("cy", 6).attr("r", 3.2).attr("fill", s.color);
+      row.append("text")
+        .attr("x", 30).attr("y", 9)
+        .attr("font-size", 13).attr("font-weight", 600)
+        .attr("fill", "#222")
+        .text(s.algo);
+      row.append("text")
+        .attr("x", 30).attr("y", 26)
+        .attr("font-size", 11)
+        .attr("fill", "#6a727a")
+        .attr("font-variant-numeric", "tabular-nums")
+        .text(`best ${s.param}=${best[0]} → ${best[1].toFixed(3)}`);
+    });
+
+    // Hover readout
+    const readout = document.getElementById("param-sweep-readout");
+    const hoverDot = root.append("circle")
+      .attr("r", 6).attr("fill", "none").attr("stroke-width", 2)
+      .style("display", "none").style("pointer-events", "none");
+
+    const overlay = root.append("rect")
+      .attr("width", innerW).attr("height", innerH)
+      .attr("fill", "transparent");
+
+    overlay.on("mousemove", function (event) {
+      const [mx, my] = d3.pointer(event);
+      let bestPt = null, bestDist = Infinity, bestSeries = null;
+      data.forEach(s => {
+        s.points.forEach(p => {
+          const dx = x(p[0]) - mx, dy = y(p[1]) - my;
+          const d2 = dx*dx + dy*dy;
+          if (d2 < bestDist) { bestDist = d2; bestPt = p; bestSeries = s; }
+        });
+      });
+      if (bestPt && bestDist < 60*60) {
+        hoverDot.style("display", null)
+          .attr("cx", x(bestPt[0])).attr("cy", y(bestPt[1]))
+          .attr("stroke", bestSeries.color);
+        readout.innerHTML = `<strong style="color:${bestSeries.color}">${bestSeries.algo}</strong> · ${bestSeries.param} = ${bestPt[0]} → reward ${bestPt[1].toFixed(3)}`;
+      } else {
+        hoverDot.style("display", "none");
+        readout.textContent = "Hover a curve to see the parameter value and average reward at that point.";
+      }
+    }).on("mouseleave", () => {
+      hoverDot.style("display", "none");
+      readout.textContent = "Hover a curve to see the parameter value and average reward at that point.";
+    });
+  })();
+})();
+
+</script>
