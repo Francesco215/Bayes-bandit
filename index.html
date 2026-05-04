@@ -1330,7 +1330,6 @@
 
     function draw() {
       const allBuckets = sharedState.pulls.map(p => bucketize(p.samples));
-      const maxCount = Math.max(1, d3.max(allBuckets.flat(), d => d.count) || 1);
       const groups = bucketLayer.selectAll("g.evidence-arm").data(allBuckets);
       groups.exit().remove();
       const merged = groups.enter().append("g")
@@ -1343,6 +1342,7 @@
         const bw = xScale.bandwidth();
         const bx = bw / 2;
         const maxHalfWidth = bw / 2;
+        const maxCount = Math.max(1, d3.max(buckets, d => d.count) || 1);
 
         const guides = g.selectAll("rect.bucket-guide").data(buckets);
         guides.enter().append("rect")
@@ -1917,7 +1917,6 @@
 
     function draw() {
       const allBuckets = sharedState.pulls.map(p => bucketize(p.samples));
-      const maxCount = Math.max(1, d3.max(allBuckets.flat(), d => d.count) || 1);
       const groups = bucketLayer.selectAll("g.evidence-arm").data(allBuckets);
       groups.exit().remove();
       const merged = groups.enter().append("g")
@@ -1930,6 +1929,53 @@
         const bw = xScale.bandwidth();
         const bx = bw / 2;
         const maxHalfWidth = bw / 2;
+        const maxCount = Math.max(1, d3.max(buckets, d => d.count) || 1);
+
+        const arm = sharedState.arms[i];
+        const pp = posteriorParams(i);
+        const estMu = pp.muN;
+        const estSigma = Math.sqrt(pp.betaN / Math.max(0.01, pp.alphaN - 1));
+
+        const ys = d3.range(80).map(j => yMin + ((yMax - yMin) * j) / 79);
+        
+        // Ghost ground truth
+        const trueDens = ys.map(y => normPdf(y, arm.mu, arm.sigma));
+        const maxTrueDens = Math.max(1e-9, d3.max(trueDens));
+        const ghostPath = d3.area()
+          .x0(d => bx - (d.dens / maxTrueDens) * maxHalfWidth)
+          .x1(d => bx + (d.dens / maxTrueDens) * maxHalfWidth)
+          .y(d => yScale(d.y))
+          .curve(d3.curveBasis);
+
+        const ghost = g.selectAll("path.ghost-violin").data([trueDens]);
+        ghost.enter().insert("path", ":first-child")
+          .attr("class", "ghost-violin")
+          .merge(ghost)
+          .datum(ys.map((y, j) => ({ y, dens: trueDens[j] })))
+          .attr("d", ghostPath)
+          .attr("fill", ARM_COLORS[i])
+          .attr("opacity", 0.15)
+          .attr("stroke", "none");
+
+        // Dashed posterior
+        const postDens = ys.map(y => normPdf(y, estMu, estSigma));
+        const maxPostDens = Math.max(1e-9, d3.max(postDens));
+        const postPath = d3.area()
+          .x0(d => bx - (d.dens / maxPostDens) * maxHalfWidth)
+          .x1(d => bx + (d.dens / maxPostDens) * maxHalfWidth)
+          .y(d => yScale(d.y))
+          .curve(d3.curveBasis);
+
+        const postLine = g.selectAll("path.post-violin").data([postDens]);
+        postLine.enter().insert("path", ":first-child")
+          .attr("class", "post-violin")
+          .merge(postLine)
+          .datum(ys.map((y, j) => ({ y, dens: postDens[j] })))
+          .attr("d", postPath)
+          .attr("fill", "none")
+          .attr("stroke", ARM_COLORS[i])
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "5 5");
 
         const guides = g.selectAll("rect.bucket-guide").data(buckets);
         guides.enter().append("rect")
