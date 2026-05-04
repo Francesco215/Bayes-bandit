@@ -255,6 +255,14 @@
     .param-legend-card {
       width: 250.25px;
     }
+    .evidence-controls-card {
+      width: 250.25px;
+    }
+    .evidence-bucket-empty {
+      fill: rgba(18, 18, 18, 0.035);
+      stroke: rgba(18, 18, 18, 0.09);
+      stroke-width: 1;
+    }
     .param-legend {
       font-size: 12px;
     }
@@ -521,8 +529,41 @@
   <p>
     You walk into a room with $K$ slot machines. Each one pays out a noisy reward drawn from its own
     Gaussian distribution &mdash; you don't know the means, you don't know the variances, and you have a
-    finite number of pulls. Your job is to earn as much money (aka. "reward") as possible.<br><br>
-    Every pull is a tradeoff:
+    finite number of pulls. Your job is to earn as much money (aka. "reward") as possible.
+  </p>
+
+  <figure>
+    <div class="bb-card">
+      <h3>Pull the hidden arms</h3>
+      <p class="bb-sub">The true reward distributions are hidden. Each pull drops one reward into a bucket; enough evidence makes each arm's empirical violin appear.</p>
+      <div class="bb-plot-wrap">
+        <svg id="evidence-svg" viewBox="0 0 1100 480"></svg>
+      </div>
+    </div>
+    <figcaption>
+      Figure 1: Evidence from the same five hidden arms used throughout the page. The agent sees only individual
+      rewards; repeated pulls fill buckets until the observed rewards form a histogram-like violin.
+    </figcaption>
+  </figure>
+  <div id="evidence-controls" class="bb-controls l-gutter">
+    <aside class="bb-card evidence-controls-card">
+      <p class="arm-pulls-label">Pull an arm</p>
+      <div class="arm-pulls" id="evidence-arm-pulls"></div>
+      <div class="actions">
+        <button id="evidence-thompson" class="primary" type="button">Draw best arm (Thompson sample)</button>
+        <button id="evidence-pull10" type="button">Random pull &times;10</button>
+        <button id="evidence-reset" type="button">Reset</button>
+      </div>
+      <p class="stat-line" id="evidence-stats"></p>
+      <p class="stat-line" id="evidence-stats-extra"></p>
+      <hr class="divider">
+      <h4>Observed rewards</h4>
+      <p class="stat-line" id="evidence-per-arm"></p>
+    </aside>
+  </div>
+
+  <p>
+  Every pull is a tradeoff:
     <ul>
     <li><em><b>exploit</b></em> the arm that has looked best so far, at the cost of not exploring other potentially better arms</li>
     <li><em><b>explore</b></em> an arm whose true quality you're still uncertain about, at the cost of exploiting the best-known arm</li>
@@ -545,7 +586,7 @@
     $$
     r_{k,i}\mid\mu_k,\sigma_k^2 \;\sim\; \mathcal N(\mu_k,\sigma_k^2).
     $$
-    The figure below shows five arms freshly sampled from the environment used in the study. The thick
+    Figure&nbsp;2 shows the five arms freshly sampled from the environment used in the study. The thick
     bar marks the latent mean $\mu_k$; the violin shows the spread of rewards you'd actually see.
   </p>
 
@@ -556,7 +597,7 @@
       </div>
     </div>
     <figcaption>
-      Figure 1: Five sampled arms. Each violin is the reward distribution $\mathcal N(\mu_k,\sigma_k^2)$ for one arm; the
+      Figure 2: Five sampled arms. Each violin is the reward distribution $\mathcal N(\mu_k,\sigma_k^2)$ for one arm; the
       horizontal bar is $\mu_k$. The agent never sees the violins &mdash; only individual reward draws from the arms it pulls.
     </figcaption>
   </figure>
@@ -567,7 +608,7 @@
       </div>
       <p class="stat-line" id="arms-stats"></p>
       <p class="stat-line" style="color:var(--bb-ink-soft); font-size:12px;">
-        Re-rolling resets all pulls in Figure&nbsp;2 — the three figures share one world.
+        Re-rolling resets all pulls in Figures&nbsp;1 and&nbsp;3 — the four interactive figures share one world.
       </p>
     </aside>
   </div>
@@ -590,7 +631,7 @@
     $$
     \mu_k \mid D_k \sim t
     $$
-    This is the distribution shown below in figure 2. Each colored curve represents what the model currently believes
+    This is the distribution shown below in Figure&nbsp;3. Each colored curve represents what the model currently believes
     about one arm's expected reward, not just the next noisy reward from that arm.
   </p>
   <p>
@@ -648,7 +689,7 @@
       </div>
     </div>
     <figcaption>
-      Figure 2: As you sample each arm, $\kappa_{k,n}$ grows and the posterior on $\mu_k$ collapses toward $\mu_{k,n}$. Notice how
+      Figure 3: As you sample each arm, $\kappa_{k,n}$ grows and the posterior on $\mu_k$ collapses toward $\mu_{k,n}$. Notice how
       noisier arms (large $\sigma_k$) take more pulls to pin down than quiet ones.
     </figcaption>
   </figure>
@@ -742,7 +783,7 @@
   <figure class="l-page-outset">
     <div class="bb-card">
       <h3>Probability of being the best, by Monte Carlo</h3>
-      <p class="bb-sub">Each tick on the strip draws one $\tilde\mu_k$ per arm. The bright dot marks the sampled winner; manual pulls from Figure&nbsp;2 mark the chosen lever instead.</p>
+      <p class="bb-sub">Each tick on the strip draws one $\tilde\mu_k$ per arm. The bright dot marks the sampled winner; manual pulls from Figure&nbsp;3 mark the chosen lever instead.</p>
       <div class="bb-plot-wrap">
         <svg id="mc-strip-svg" viewBox="0 0 1200 240"></svg>
       </div>
@@ -758,17 +799,17 @@
           </div>
           <p class="stat-line" id="mc-stats"></p>
           <hr class="divider">
-          <h4>Pulls so far <span style="font-weight:400;color:var(--bb-ink-soft)">(carries over from Figure 2)</span></h4>
+          <h4>Pulls so far <span style="font-weight:400;color:var(--bb-ink-soft)">(carries over from Figure 3)</span></h4>
           <p class="stat-line" id="mc-pulls"></p>
           <p class="stat-line" style="color:var(--bb-ink-soft); font-size:12px;">
-            Pull more arms in Figure&nbsp;2 to feed this estimator more data &mdash; the posteriors are shared.
+            Pull more arms in Figure&nbsp;3 to feed this estimator more data &mdash; the posteriors are shared.
           </p>
         </aside>
       </div>
     </div>
     <figcaption>
-      Figure 3: A Monte Carlo estimator of $\mathbb P(k^\star=k\mid D)$. Each draw samples one $\tilde\mu_k$ per arm and credits whichever
-      arm came out highest. In the strip, the bright dot is the sampled winner during Thompson sampling, or the chosen lever after a manual Figure&nbsp;2 pull.
+      Figure 4: A Monte Carlo estimator of $\mathbb P(k^\star=k\mid D)$. Each draw samples one $\tilde\mu_k$ per arm and credits whichever
+      arm came out highest. In the strip, the bright dot is the sampled winner during Thompson sampling, or the chosen lever after a manual Figure&nbsp;3 pull.
     </figcaption>
   </figure>
 
@@ -794,7 +835,7 @@
     <div class="algo-card" style="--algo-color:#e67814;">
       <h5>Bayesian P(best)</h5>
       <p class="param">$\beta_0$</p>
-      <p>It's the method of this blog post. Sweep the same $\beta_0$ prior-scale slider from Figure&nbsp;2</p>
+      <p>It's the method of this blog post. Sweep the same $\beta_0$ prior-scale slider from Figure&nbsp;3</p>
     </div>
     <div class="algo-card" style="--algo-color:#d63b76;">
       <h5>Optimistic greedy</h5>
@@ -823,14 +864,14 @@
       </p>
     </div>
     <figcaption>
-      Figure 4: Average reward over the first 1000 steps as a function of each algorithm's tuned
+      Figure 5: Average reward over the first 1000 steps as a function of each algorithm's tuned
       parameter (log-spaced). Each curve sweeps a single hyperparameter; the dot marks each
       algorithm's best setting. UCB peaks at $c=1$, with Bayesian $\beta_0\!=\!2$ a close second.
     </figcaption>
   </figure>
   <div id="param-sweep-legend" class="bb-controls l-gutter">
     <aside class="bb-card param-legend-card">
-      <table class="bb-table param-legend" aria-label="Figure 4 ranked curve legend">
+      <table class="bb-table param-legend" aria-label="Figure 5 ranked curve legend">
         <caption>Ranked by reward</caption>
         <tbody>
           <tr style="--series-color:#3764e6;">
@@ -968,11 +1009,12 @@
 <script>
 /* The Bayes Bandit — interactive figures
  * ---------------------------------------
- * Three D3-based widgets:
- *   #arms-svg : violin plot of true reward distributions (Figure 1)
- *   #post-svg : Student-t posteriors over each arm's latent mean (Figure 2)
- *   #mc-svg   : Monte Carlo estimator of P(k* = k | D)              (Figure 3)
- * Figures 2 & 3 share state — pulling arms in Fig 2 updates Fig 3.
+ * D3-based widgets:
+ *   #evidence-svg : empirical bucket violins from observed pulls (Figure 1)
+ *   #arms-svg     : violin plot of true reward distributions (Figure 2)
+ *   #post-svg     : Student-t posteriors over each arm's latent mean (Figure 3)
+ *   #mc-svg       : Monte Carlo estimator of P(k* = k | D)              (Figure 4)
+ * Figures 1, 3 & 4 share pull state.
  */
 
 (function () {
@@ -1115,11 +1157,16 @@
   }
 
   /* ============================================================
-     SHARED STATE — used by all three figures
+     SHARED STATE — used by all interactive figures
      ============================================================ */
+  function emptyPulls() {
+    return Array(K).fill(null).map(() => ({ n: 0, s: 0, q: 0, samples: [] }));
+  }
+
   const sharedState = {
     arms: makeWorld({ muScale: 1.0, sigMin: 0.5, sigMax: 1.5 }),
-    pulls: Array(K).fill(null).map(() => ({ n: 0, s: 0, q: 0 })),
+    pulls: emptyPulls(),
+    lastPull: null,
     listeners: [],
     mcDrawListeners: []
   };
@@ -1172,7 +1219,10 @@
     p.n += 1;
     p.s += r;
     p.q += r * r;
+    p.samples.push(r);
+    sharedState.lastPull = { arm: k, reward: r };
     notify();
+    return r;
   }
 
   function pullArmFromPosteriorDemo(k) {
@@ -1189,7 +1239,8 @@
   }
 
   function resetPulls() {
-    sharedState.pulls = Array(K).fill(null).map(() => ({ n: 0, s: 0, q: 0 }));
+    sharedState.pulls = emptyPulls();
+    sharedState.lastPull = null;
     notify();
   }
 
@@ -1203,7 +1254,177 @@
   }
 
   /* ============================================================
-     Figure 1 — sampled arm violin plot
+     Figure 1 — evidence bucket violin plot
+     ============================================================ */
+  (function evidenceFigure() {
+    const svg = d3.select("#evidence-svg");
+    if (svg.empty()) return;
+    const W = 1100, H = 480;
+    const margin = { top: 28, right: 24, bottom: 48, left: 60 };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+    const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const bucketCount = 24;
+    const yMin = -4.5;
+    const yMax = 4.5;
+    const bucketStep = (yMax - yMin) / bucketCount;
+    const xScale = d3.scaleBand().domain(d3.range(K)).range([0, innerW]).padding(0.35);
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([innerH, 0]);
+
+    root.append("g")
+      .attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(xScale).tickFormat(d => `arm ${d + 1}`))
+      .call(g => g.selectAll("text").attr("font-size", 13));
+    root.append("g")
+      .call(d3.axisLeft(yScale).ticks(7))
+      .call(g => g.selectAll("text").attr("font-size", 12));
+    root.append("text")
+      .attr("transform", `translate(${innerW/2},${innerH + 36})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Arm");
+    root.append("text")
+      .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Observed reward");
+    root.append("line")
+      .attr("x1", 0).attr("x2", innerW)
+      .attr("y1", yScale(0)).attr("y2", yScale(0))
+      .attr("stroke", "#999")
+      .attr("stroke-dasharray", "4 4");
+
+    const bucketLayer = root.append("g");
+    const lastLayer = root.append("g");
+    const pullsBox = document.getElementById("evidence-arm-pulls");
+    const statsEl = document.getElementById("evidence-stats");
+    const extraEl = document.getElementById("evidence-stats-extra");
+    const perArmEl = document.getElementById("evidence-per-arm");
+
+    for (let k = 0; k < K; k++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.arm = k;
+      btn.innerHTML = `
+        <span class="arm-bar" style="background:${ARM_COLORS[k]}"></span>
+        <span class="arm-num">${k + 1}</span>
+        <span class="arm-n" data-evidence-armn="${k}">0</span>`;
+      btn.addEventListener("click", () => pullArm(k));
+      pullsBox.appendChild(btn);
+    }
+
+    function bucketize(samples) {
+      const counts = Array(bucketCount).fill(0);
+      samples.forEach(r => {
+        const idx = Math.max(0, Math.min(bucketCount - 1, Math.floor((r - yMin) / bucketStep)));
+        counts[idx] += 1;
+      });
+      return counts.map((count, i) => ({
+        count,
+        y0: yMin + i * bucketStep,
+        y1: yMin + (i + 1) * bucketStep,
+        yc: yMin + (i + 0.5) * bucketStep
+      }));
+    }
+
+    function draw() {
+      const allBuckets = sharedState.pulls.map(p => bucketize(p.samples));
+      const maxCount = Math.max(1, d3.max(allBuckets.flat(), d => d.count) || 1);
+      const groups = bucketLayer.selectAll("g.evidence-arm").data(allBuckets);
+      groups.exit().remove();
+      const merged = groups.enter().append("g")
+        .attr("class", "evidence-arm")
+        .merge(groups)
+        .attr("transform", (_, i) => `translate(${xScale(i)},0)`);
+
+      merged.each(function (buckets, i) {
+        const g = d3.select(this);
+        const bw = xScale.bandwidth();
+        const bx = bw / 2;
+        const maxHalfWidth = bw / 2;
+
+        const guides = g.selectAll("rect.bucket-guide").data(buckets);
+        guides.enter().append("rect")
+          .attr("class", "bucket-guide evidence-bucket-empty")
+          .merge(guides)
+          .attr("x", bx - maxHalfWidth)
+          .attr("y", d => yScale(d.y1) + 1)
+          .attr("width", maxHalfWidth * 2)
+          .attr("height", d => Math.max(1, yScale(d.y0) - yScale(d.y1) - 2))
+          .attr("rx", 2);
+        guides.exit().remove();
+
+        const filled = g.selectAll("rect.bucket-fill").data(buckets);
+        filled.enter().append("rect")
+          .attr("class", "bucket-fill")
+          .merge(filled)
+          .attr("x", d => bx - (d.count / maxCount) * maxHalfWidth)
+          .attr("y", d => yScale(d.y1) + 1)
+          .attr("width", d => (d.count / maxCount) * maxHalfWidth * 2)
+          .attr("height", Math.max(1, yScale(yMin) - yScale(yMin + bucketStep) - 2))
+          .attr("rx", 2)
+          .attr("fill", ARM_COLORS[i])
+          .attr("opacity", d => d.count > 0 ? 0.78 : 0);
+        filled.exit().remove();
+      });
+
+      const last = sharedState.lastPull ? [sharedState.lastPull] : [];
+      const lastDot = lastLayer.selectAll("circle.last-reward").data(last);
+      lastDot.enter().append("circle")
+        .attr("class", "last-reward")
+        .merge(lastDot)
+        .attr("cx", d => xScale(d.arm) + xScale.bandwidth() / 2)
+        .attr("cy", d => yScale(Math.max(yMin, Math.min(yMax, d.reward))))
+        .attr("r", 5)
+        .attr("fill", d => ARM_COLORS[d.arm])
+        .attr("stroke", "#222")
+        .attr("stroke-width", 1.5);
+      lastDot.exit().remove();
+
+      for (let k = 0; k < K; k++) {
+        const el = document.querySelector(`[data-evidence-armn="${k}"]`);
+        if (el) el.textContent = `${sharedState.pulls[k].n}`;
+      }
+
+      const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
+      const totalReward = sharedState.pulls.reduce((acc, p) => acc + p.s, 0);
+      const avgReward = totalN > 0 ? totalReward / totalN : 0;
+      const empiricalBest = sharedState.pulls.reduce((best, p, i) => {
+        if (p.n === 0) return best;
+        if (best === null) return i;
+        return p.s / p.n > sharedState.pulls[best].s / sharedState.pulls[best].n ? i : best;
+      }, null);
+      const lastText = sharedState.lastPull
+        ? `Last: arm ${sharedState.lastPull.arm + 1}, reward ${sharedState.lastPull.reward.toFixed(2)}`
+        : "Last: none";
+      statsEl.textContent = totalN > 0
+        ? `Pulls: ${totalN} · Total reward: ${totalReward.toFixed(2)} · Mean reward: ${avgReward.toFixed(2)}`
+        : "No pulls yet.";
+      extraEl.textContent = empiricalBest !== null
+        ? `${lastText} · Empirical best: arm ${empiricalBest + 1}`
+        : lastText;
+      perArmEl.textContent = sharedState.pulls
+        .map((p, i) => p.n > 0 ? `arm${i + 1}: n=${p.n}, mean=${(p.s / p.n).toFixed(2)}` : `arm${i + 1}: n=0`)
+        .join(" · ");
+    }
+
+    sharedState.listeners.push(draw);
+    document.getElementById("evidence-thompson").addEventListener("click", () => policyStepWithMonteCarloTrace());
+    document.getElementById("evidence-pull10").addEventListener("click", () => {
+      for (let i = 0; i < 10; i++) pullArm(Math.floor(Math.random() * K));
+    });
+    document.getElementById("evidence-reset").addEventListener("click", () => {
+      const postReset = document.getElementById("post-reset");
+      if (postReset) postReset.click();
+      else resetPulls();
+    });
+
+    draw();
+  })();
+
+  /* ============================================================
+     Figure 2 — sampled arm violin plot
      ============================================================ */
   (function armsFigure() {
     const svg = d3.select("#arms-svg");
@@ -1315,7 +1536,7 @@
   })();
 
   /* ============================================================
-     Figure 2 — posteriors over latent means
+     Figure 3 — posteriors over latent means
      ============================================================ */
   (function posteriorFigure() {
     const svg = d3.select("#post-svg");
@@ -1467,7 +1688,7 @@
   })();
 
   /* ============================================================
-     Figure 3 — Monte Carlo P(best)
+     Figure 4 — Monte Carlo P(best)
      ============================================================ */
   (function mcFigure() {
     const stripSvg = d3.select("#mc-strip-svg");
@@ -1686,7 +1907,7 @@
   })();
 
   /* ============================================================
-     Figure 4 — Parameter sweep (Sutton-Barto style)
+     Figure 5 — Parameter sweep (Sutton-Barto style)
      ============================================================ */
   (function paramSweepFigure() {
     const svg = d3.select("#param-sweep-svg");
