@@ -252,12 +252,83 @@
     table.bb-table td.num, table.bb-table th.num { text-align: right; }
     table.bb-table tr.highlight td { background: rgba(255, 140, 0, 0.08); }
 
+    .param-legend-card {
+      width: 250.25px;
+    }
+    .param-legend {
+      font-size: 12px;
+    }
+    .param-legend caption {
+      padding: 0 0 6px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--bb-ink-soft);
+    }
+    .param-legend th, .param-legend td {
+      padding: 6px 7px;
+      vertical-align: middle;
+    }
+    .param-legend tbody td:first-child {
+      border-left: 4px solid var(--series-color);
+    }
+    .param-legend .legend-key {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 400;
+    }
+    .param-legend .legend-swatch {
+      width: 20px;
+      height: 0;
+      border-top: 3px solid var(--series-color);
+      border-radius: 999px;
+      position: relative;
+      flex: 0 0 20px;
+    }
+    .param-legend .legend-swatch::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -5px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--series-color);
+      transform: translateX(-50%);
+    }
+    .param-legend tr.highlight {
+      outline: 2px solid rgba(230, 120, 20, 0.38);
+      outline-offset: -2px;
+    }
+    .param-legend tr.highlight td {
+      background: rgba(255, 140, 0, 0.10);
+    }
+    .param-legend .rank {
+      width: 2em;
+      color: var(--bb-ink-soft);
+      font-weight: 600;
+    }
+    .param-legend .reward {
+      color: var(--bb-ink-soft);
+      white-space: nowrap;
+    }
+    @media (max-width: 760px) {
+      .param-legend {
+        min-width: 360px;
+      }
+    }
+
     /* Inline algorithm card grid */
     .algo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(5, minmax(180px, 1fr));
       gap: 14px;
       margin: 16px 0;
+      overflow-x: auto;
+      padding-bottom: 2px;
     }
     .algo-card {
       border: 1px solid var(--bb-line);
@@ -274,8 +345,11 @@
     .algo-card .param {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       font-size: 12px;
-      color: var(--bb-blue);
+      color: var(--algo-color, var(--bb-blue));
       margin: 0 0 6px;
+    }
+    .algo-card .param .katex {
+      color: var(--algo-color, var(--bb-blue));
     }
     .algo-card p {
       margin: 0;
@@ -388,7 +462,7 @@
 
 <d-title>
   <h1>The Bayes Bandit</h1>
-  <p>Pew Pew</p>
+  <p>*Pew Pew*</p>
 </d-title>
 
 <d-byline>
@@ -678,39 +752,39 @@
   </p>
   <h2>Comparison with known methods</h2>
   
-  <p>
   <blockquote>
-      Comparison is the thief of joy <br>
-      - Not a scientist
+    Comparison is the thief of joy <br>
+    - Not a reviewer
   </blockquote>
-    Five algorithms, one knob each, swept across powers of two. The benchmark is average reward over
-    the first 1000 steps in the Gaussian k-armed environment from Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.
+  <p>
+    To benchmark this method I replicated the 10-armed testbed parameter study with the methods used in Chapter&nbsp;2 of Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.<br>
+    Each of the algorithms has a hyperparameter that balances exploration vs. exploitation. To cut things short I'm going to give you a brief overview of each methods in the cards below.
   </p>
-  <div class="algo-grid">
-    <div class="algo-card">
-      <h5>$\varepsilon$-greedy</h5>
-      <p class="param">epsilon</p>
-      <p>Exploit the empirical best most of the time, explore uniformly with probability $\varepsilon$.</p>
-    </div>
-    <div class="algo-card">
+  <div class="algo-grid l-page-outset">
+    <div class="algo-card" style="--algo-color:#3764e6;">
       <h5>UCB</h5>
-      <p class="param">c</p>
+      <p class="param">$c$</p>
       <p>Add an optimism bonus $c\sqrt{\log t / N_k(t)}$ to each empirical mean; pull the arg-max.</p>
     </div>
-    <div class="algo-card">
-      <h5>Gradient bandit</h5>
-      <p class="param">alpha</p>
-      <p>Learn soft action preferences using reward advantages; sample from the softmax.</p>
+    <div class="algo-card" style="--algo-color:#e67814;">
+      <h5>Bayesian P(best)</h5>
+      <p class="param">$\beta_0$</p>
+      <p>It's the method of this blog post. Sweep the same $\beta_0$ prior-scale slider from Figure&nbsp;2</p>
     </div>
-    <div class="algo-card">
+    <div class="algo-card" style="--algo-color:#d63b76;">
       <h5>Optimistic greedy</h5>
-      <p class="param">Q0</p>
+      <p class="param">$Q_0$</p>
       <p>Initialize all $Q$-values high so every arm gets pulled at least a few times.</p>
     </div>
-    <div class="algo-card" style="border-color: var(--bb-orange); background: rgba(255, 140, 0, 0.06);">
-      <h5>Bayesian P(best)</h5>
-      <p class="param" style="color: var(--bb-orange);">kappa, alpha, beta, T</p>
-      <p>Sample $\tilde\mu_k$ from each arm's Student-$t$ posterior; act on the argmax.</p>
+    <div class="algo-card" style="--algo-color:#7e6ad7;">
+      <h5>Gradient bandit</h5>
+      <p class="param">$\alpha$</p>
+      <p>Learn soft action preferences using reward advantages; sample from the softmax.</p>
+    </div>
+    <div class="algo-card" style="--algo-color:#7aa6ff;">
+      <h5>$\varepsilon$-greedy</h5>
+      <p class="param">$\varepsilon$</p>
+      <p>Exploit the empirical best most of the time, explore uniformly with probability $\varepsilon$.</p>
     </div>
   </div>
 
@@ -729,93 +803,50 @@
       algorithm's best setting. UCB peaks at $c=1$, with Bayesian $\beta_0\!=\!2$ a close second.
     </figcaption>
   </figure>
+  <div id="param-sweep-legend" class="bb-controls l-gutter">
+    <aside class="bb-card param-legend-card">
+      <table class="bb-table param-legend" aria-label="Figure 4 ranked curve legend">
+        <caption>Ranked by reward</caption>
+        <tbody>
+          <tr style="--series-color:#3764e6;">
+            <td class="rank">1</td>
+            <td><span class="legend-key"><span class="legend-swatch"></span>UCB</span></td>
+            <td class="num reward"><strong>1.5490</strong></td>
+          </tr>
+          <tr class="highlight" style="--series-color:#e67814;">
+            <td class="rank">2</td>
+            <td><span class="legend-key"><span class="legend-swatch"></span>Bayesian </span></td>
+            <td class="num reward">1.5372</td>
+          </tr>
+          <tr style="--series-color:#d63b76;">
+            <td class="rank">3</td>
+            <td><span class="legend-key"><span class="legend-swatch"></span>Optimistic greedy</span></td>
+            <td class="num reward">1.5125</td>
+          </tr>
+          <tr style="--series-color:#7e6ad7;">
+            <td class="rank">4</td>
+            <td><span class="legend-key"><span class="legend-swatch"></span>Gradient bandit</span></td>
+            <td class="num reward">1.4735</td>
+          </tr>
+          <tr style="--series-color:#7aa6ff;">
+            <td class="rank">5</td>
+            <td><span class="legend-key"><span class="legend-swatch"></span>$\varepsilon$-greedy</span></td>
+            <td class="num reward">1.3814</td>
+          </tr>
+        </tbody>
+      </table>
+    </aside>
+  </div>
 
   <p>
-    The numbers, ranked:
-  </p>
-
-  <table class="bb-table">
-    <thead>
-      <tr>
-        <th>Algorithm</th>
-        <th>Tuned parameter</th>
-        <th class="num">Best value</th>
-        <th class="num">Average reward</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>UCB</td>
-        <td><code>c</code></td>
-        <td class="num">1</td>
-        <td class="num"><strong>1.5490</strong></td>
-      </tr>
-      <tr class="highlight">
-        <td>Bayesian P(best)</td>
-        <td><code>beta</code></td>
-        <td class="num">2</td>
-        <td class="num">1.5372</td>
-      </tr>
-      <tr>
-        <td>Optimistic greedy</td>
-        <td><code>Q0</code></td>
-        <td class="num">1</td>
-        <td class="num">1.5125</td>
-      </tr>
-      <tr>
-        <td>Gradient bandit</td>
-        <td><code>alpha</code></td>
-        <td class="num">0.25</td>
-        <td class="num">1.4735</td>
-      </tr>
-      <tr>
-        <td>$\varepsilon$-greedy</td>
-        <td><code>epsilon</code></td>
-        <td class="num">0.0625</td>
-        <td class="num">1.3814</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>
-    UCB wins by $0.0118$. That's not nothing, but it's also not a huge gap given that UCB has decades of
-    tuning behind it and is famously efficient at the cumulative-reward objective. The Bayesian method
-    edges out everything else &mdash; and it does it while answering a richer question.
-  </p>
-
-  <h2>Why UCB still wins on this metric (and where it stops winning)</h2>
-  <p>
-    UCB chooses
+    UCB wins by $0.0118$ which is $\sim 0.76\%$ better than the bayesian method.<br>
+    This is not that suprising given that the UCB policy looks bayesian-ish.
     $$
     A_t \;=\; \arg\max_k\!\left[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\right].
     $$
-    It looks Bayesian-ish &mdash; uncertain arms get an optimism bonus &mdash; but it's actually an index policy
-    designed for one specific objective: cumulative regret. It is excellent at that objective, and the
-    sweep reflects this.
+    I had a whole section explaining the tradeoffs and differences between UCB and the Bayesian method, but honestly that's not that interesting.<br>
   </p>
 
-  <p>
-    Bayesian P(best) optimizes a different thing. Two metrics worth thinking about:
-  </p>
-
-  <ul>
-    <li>
-      <strong>Recommendation accuracy:</strong> after $T$ pulls, did we identify the true best arm?
-      $\mathbf 1\{\hat k_T = k^\star\}$.
-    </li>
-    <li>
-      <strong>Simple regret:</strong> $\mu_{k^\star} - \mu_{\hat k_T}$ &mdash; how much expected reward
-      our final recommendation leaves on the table.
-    </li>
-  </ul>
-
-  <p>
-    Both are best-arm-identification objectives, and both are exactly what
-    $\mathbb P(k^\star=k\mid D)$ is computing. UCB doesn't even maintain that quantity. So while UCB
-    will beat us on the cumulative-reward leaderboard, the Bayesian method gives us a calibrated answer
-    to the question we usually <em>actually</em> care about once the experiment is over: which arm should
-    we ship?
-  </p>
 
   <h2>Aleatoric vs. epistemic, falling out of the math</h2>
   <p>
@@ -1672,7 +1703,7 @@
     ];
 
     const W = 1100, H = 520;
-    const margin = { top: 30, right: 220, bottom: 60, left: 70 };
+    const margin = { top: 30, right: 28, bottom: 60, left: 70 };
     const innerW = W - margin.left - margin.right;
     const innerH = H - margin.top - margin.bottom;
     const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
@@ -1756,35 +1787,6 @@
         .attr("cx", x(best[0])).attr("cy", y(best[1]))
         .attr("r", 7).attr("fill", "none")
         .attr("stroke", s.color).attr("stroke-width", 2);
-    });
-
-    // Right-side legend with best values
-    const legend = svg.append("g")
-      .attr("transform", `translate(${margin.left + innerW + 22},${margin.top + 6})`);
-    data.forEach((s, i) => {
-      const best = s.points.reduce((a, b) => b[1] > a[1] ? b : a);
-      const row = legend.append("g").attr("transform", `translate(0,${i * 36})`);
-      row.append("line")
-        .attr("x1", 0).attr("x2", 22)
-        .attr("y1", 6).attr("y2", 6)
-        .attr("stroke", s.color).attr("stroke-width", 3)
-        .attr("stroke-linecap", "round");
-      row.append("circle")
-        .attr("cx", 11).attr("cy", 6).attr("r", 3.2).attr("fill", s.color);
-      row.append("text")
-        .attr("x", 30).attr("y", 9)
-        .attr("font-size", 13).attr("font-weight", 600)
-        .attr("fill", "#222")
-        .text(s.algo);
-      appendKatexLabel(row, `\\text{best }${s.latexParam}=${best[0]}\\to ${best[1].toFixed(3)}`, {
-        x: 30,
-        y: 22,
-        width: 340,
-        height: 36,
-        anchor: "start",
-        fontSize: 22,
-        color: "#6a727a"
-      });
     });
 
     // Hover readout
