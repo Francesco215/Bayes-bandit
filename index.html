@@ -457,7 +457,23 @@
 </head>
 
 <d-front-matter>
-  <script type="text/json">{"authors": []}</script>
+  <script type="text/json">
+    {
+      "title": "The Bayes Bandit",
+      "published": "2025",
+      "authors": [
+        {
+          "author": "Francesco Sacco",
+          "authorURL": "https://github.com/Francesco215",
+          "affiliations": [
+            {
+              "name": "None"
+            }
+          ]
+        }
+      ]
+    }
+  </script>
 </d-front-matter>
 
 <d-title>
@@ -484,34 +500,43 @@
 </d-byline>
 
 <d-article>
-
+  <blockquote><b>What is Curiosity? Mathematically?</b></blockquote>
+  <p>
+    This is one of the most important questions of the entire field of Artificial Intelligence.<br>
+    The whole field of dataset curation will go away once a good mathematical framework of curiosity emerges.
+  </p>
+  <p>
+    Hopefully, this blog post will be the first part of a series of increasingly complex environments where I explain/derive the mathematical foundations of curiosity.
+  </p>
+  <ul>
+    <li>This one explores one of the most fundamental problems in Reinforcement Learning: the $K$-armed bandit problem.</li>
+    <li>The next one (already in progess) will be a full blown chess-engine.</li>
+    <li>If everything goes well, there will be a third one, but let's not get ahead of ourselves!</li>
+  </ul>
   <h2>What is The $K$-armed bandit problem?</h2>
   <p>
       The $K$-armed bandit problem is perhaps one of the worse named pieces of math, However it has important applications
-      in reinforcement learning. Let's see how it works.
+      in reinforcement learning. Let's see how it works. 
   </p>
   <p>
     You walk into a room with $K$ slot machines. Each one pays out a noisy reward drawn from its own
     Gaussian distribution &mdash; you don't know the means, you don't know the variances, and you have a
-    finite number of pulls. Every pull is a tradeoff: <em>exploit</em> the arm that has looked best so
-    far, or <em>explore</em> an arm whose true quality you're still uncertain about.
+    finite number of pulls. Your job is to earn as much money (aka. "reward") as possible.<br><br>
+    Every pull is a tradeoff:
+    <ul>
+    <li><em><b>exploit</b></em> the arm that has looked best so far, at the cost of not exploring other potentially better arms</li>
+    <li><em><b>explore</b></em> an arm whose true quality you're still uncertain about, at the cost of exploiting the best-known arm</li>
+    </ul>
   </p>
-
   <p>
-    The textbook answers &mdash; $\varepsilon$-greedy, UCB, gradient bandit, optimistic initialization &mdash;
-    each compress this tradeoff into a single scalar knob. They work, but they don't quite answer
-    the question we actually care about:
+      So, how much should we exploit and how much should we explore?
   </p>
-
+  <p>
+      We will see, that the answer to this existential question follows easly from the math once we ask ourselfes the question:
+  </p>
   <blockquote>
-    Given everything I've seen so far, what is the probability that arm $k$ is the truly best arm?
+      Given the information available, what is the best action I can take? 
   </blockquote>
-
-  <p>
-    If we can track it, we can act on it directly. (spoiler: we can!) <br>
-    This post walks through the model, the math, and the resulting policy &mdash; and then puts it head-to-head with the
-    classical baselines.
-  </p>
 
   <h2>Setup: noisy arms, hidden means</h2>
   <p>
@@ -664,7 +689,7 @@
 
   <h2>The right question to ask</h2>
   <blockquote>
-    Given the information available, what is the best action I can take?
+      Given everything I've seen so far, what is the probability that arm $k$ is the truly best arm?
   </blockquote>
   <p>
     We can translate that question into the posteriors we just built. For each arm $k$, ask how likely
@@ -751,7 +776,7 @@
       As you can see this algo works pretty well and it's oddly satifying to watch, now let's compare with other known methods.
   </p>
   <h2>Comparison with known methods</h2>
-  
+
   <blockquote>
     Comparison is the thief of joy <br>
     - Not a reviewer
@@ -867,18 +892,7 @@
 
   <h2>Closing thoughts</h2>
   <p>
-    The original repository<d-footnote>This whole post is a writeup of a weekend project where the
-    math was largely AI-generated and the code was AI-written, with the human in the loop for ideas,
-    direction, and verification.</d-footnote> wasn't trying to invent anything new &mdash; the core idea is
-    just Thompson sampling, going back to 1933. What the project does demonstrate is that the
-    fully-Bayesian, posterior-over-arm-quality framing is competitive with carefully tuned UCB on the
-    cumulative-reward sweep, and is more directly aligned with the best-arm-identification questions
-    we usually want to answer.
-  </p>
-  <p>
-    More importantly, every quantity in this post had a clean closed form: posterior parameters,
-    Student-$t$ marginals, predictive distributions, even the decomposition of uncertainty.
-    When the model is right, the math just falls out.
+      Write something cool
   </p>
 
 </d-article>
