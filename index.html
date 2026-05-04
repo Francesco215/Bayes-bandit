@@ -40,6 +40,43 @@
       text-wrap: pretty;
     }
 
+    .l-side {
+      width: 100%;
+      padding-left: 0;
+      margin-bottom: 0 !important;
+      padding-bottom: 1em;
+    }
+
+    @media (min-width: 1180px) {
+      .l-side {
+        float: right;
+        position: relative;
+        left: 11em;
+        margin-left: -11em;
+        width: 450px;
+        padding-left: 1em;
+      }
+    }
+
+    .uncertainty-side-row {
+      grid-column: text;
+      display: block;
+    }
+    .uncertainty-side-row::after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    @media (max-width: 1179px) {
+      .uncertainty-side-row {
+        display: flex;
+        flex-direction: column-reverse;
+      }
+    }
+    .uncertainty-copy p {
+      margin-top: 0;
+    }
+
     .bb-card {
       border-radius: 10px;
       background: transparent;
@@ -257,6 +294,67 @@
     }
     .evidence-controls-card {
       width: 250.25px;
+    }
+
+    .uncertainty-figure .bb-card {
+      padding: 0;
+    }
+    .uncertainty-plot-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .uncertainty-plot-wrap svg {
+      flex: 1 1 auto;
+    }
+    .uncertainty-control-band {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border: none;
+      background: transparent;
+    }
+    .uncertainty-slider-block {
+      flex: 1 1 54%;
+      min-width: 0;
+    }
+    .uncertainty-slider-block label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--bb-blue);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .uncertainty-slider-block input {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--bb-blue);
+    }
+    .uncertainty-probability {
+      flex: 0 0 42%;
+      text-align: right;
+      color: var(--bb-ink-soft);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .uncertainty-probability strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--bb-orange);
+      font-size: 22px;
+      line-height: 1;
+    }
+    @media (max-width: 760px) {
+      .uncertainty-control-band {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .uncertainty-probability {
+        text-align: left;
+      }
     }
     .evidence-bucket-empty {
       fill: rgba(18, 18, 18, 0.035);
@@ -782,8 +880,6 @@
 
   <figure class="l-page-outset">
     <div class="bb-card">
-      <h3>Probability of being the best, by Monte Carlo</h3>
-      <p class="bb-sub">Each tick on the strip draws one $\tilde\mu_k$ per arm. The bright dot marks the sampled winner; manual pulls from Figure&nbsp;3 mark the chosen lever instead.</p>
       <div class="bb-plot-wrap">
         <svg id="mc-strip-svg" viewBox="0 0 1200 240"></svg>
       </div>
@@ -814,7 +910,156 @@
   </figure>
 
   <p>
-      As you can see this algo works pretty well and it's oddly satifying to watch, now let's compare with other known methods.
+      As you can see this algo works pretty well and it's oddly satifying to watch!
+  </p>
+  <h2>What this teaches us about curiosity</h2>
+  <p>
+      One odd thing jumps out when looking at this algorithm going: <i>sometimes it samples points where the expected mean is lower</i>. Why?
+  </p>
+  <div class="uncertainty-side-row">
+    <figure class="l-side uncertainty-figure">
+      <div class="bb-card">
+        <div class="bb-plot-wrap uncertainty-plot-wrap">
+          <svg id="uncertainty-svg" viewBox="0 0 1100 450"></svg>
+          <div class="uncertainty-control-band">
+            <div class="uncertainty-slider-block">
+              <label for="sigma-slider">
+                Known Good Arm Std Dev: <span id="sigma-val">0.50</span>
+              </label>
+              <input type="range" id="sigma-slider" min="0.01" max="1.0" step="0.01" value="0.5">
+            </div>
+            <div class="uncertainty-probability">
+              Probability of the uncertain arm having a better mean:<br>
+              <strong id="prob-val">0.0%</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        Figure 4.5: Even as the blue arm narrows around a high mean, the orange arm's wide uncertainty around a lower mean creates a fat right tail, ensuring it still gets explored.
+      </figcaption>
+    </figure>
+
+    <div class="uncertainty-copy">
+      <p>
+          It comes down to uncertainty. As the algorithm samples the winning arm, its posterior distribution narrows. We become confident in its high expected value. However, the arms we <em>haven't</em> pulled remain wide and highly uncertain.
+      </p>
+      <p>
+          A wide distribution has "fat tails". Even if its mean is lower, the right tail stretches far enough that there is a stubborn, non-zero probability of drawing a value that beats the known winner. This structural optimism is what drives Thompson Sampling to occasionally explore unproven arms.
+      </p>
+      <p>
+        Thompson Sampling does not choose the uncertain arm because it has a separate desire to explore. It chooses it because, under the current posterior, that arm still has some probability of being the best. Each round is still greedy in a sense: the algorithm samples from its beliefs, then plays the arm that looks best in that sampled world.
+      </p>
+      <blockquote>
+          The amazing thing about this approach is that it shows that curiosity is an emergent phenomenon &mdash; not something that needs to be explicitly programmed into the algorithm!
+      </blockquote>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Normal CDF approximation
+      function normalCdf(x, mean, std) {
+        var z = (x - mean) / std;
+        var t = 1 / (1 + 0.2316419 * Math.abs(z));
+        var d = 0.3989423 * Math.exp(-z * z / 2);
+        var p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+        return z > 0 ? 1 - p : p;
+      }
+
+      // Normal PDF
+      function normalPdf(x, mean, std) {
+        return Math.exp(-0.5 * Math.pow((x - mean) / std, 2)) / (std * Math.sqrt(2 * Math.PI));
+      }
+
+      const svg = d3.select("#uncertainty-svg");
+      const W = 1100, H = 450;
+      const margin = {top: 20, right: 24, bottom: 40, left: 60};
+      const innerW = W - margin.left - margin.right;
+      const innerH = H - margin.top - margin.bottom;
+
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain([-1, 4]).range([0, innerW]);
+      const y = d3.scaleLinear().domain([0, 2.5]).range([innerH, 0]);
+
+      g.append("g")
+        .attr("transform", `translate(0,${innerH})`)
+        .call(d3.axisBottom(x).ticks(10))
+        .call(axis => axis.selectAll("text").attr("font-size", 14));
+
+      const yAxisG = g.append("g")
+        .call(d3.axisLeft(y).ticks(5))
+        .call(axis => axis.selectAll("text").attr("font-size", 14))
+        .call(axis => axis.select(".domain").attr("d", `M0,${innerH}V0`));
+
+      const line = d3.line()
+        .x(d => x(d.x))
+        .y(d => y(d.y))
+        .curve(d3.curveBasis);
+
+      const area = d3.area()
+        .x(d => x(d.x))
+        .y0(innerH)
+        .y1(d => y(d.y))
+        .curve(d3.curveBasis);
+
+      const color1 = getComputedStyle(document.documentElement).getPropertyValue("--bb-blue").trim() || "#3764e6";
+      const color2 = getComputedStyle(document.documentElement).getPropertyValue("--bb-orange").trim() || "#e67814";
+
+      const pathArea1 = g.append("path").attr("fill", color1).attr("opacity", 0.18);
+      const pathLine1 = g.append("path").attr("fill", "none").attr("stroke", color1).attr("stroke-width", 2);
+
+      const pathArea2 = g.append("path").attr("fill", color2).attr("opacity", 0.18);
+      const pathLine2 = g.append("path").attr("fill", "none").attr("stroke", color2).attr("stroke-width", 2);
+
+      // True means vertical lines (like Figure 3)
+      const trueLine1 = g.append("line").attr("y1", 0).attr("y2", innerH).attr("stroke", color1).attr("stroke-width", 2).attr("stroke-dasharray", "4,4").attr("opacity", 0.55);
+      const trueLine2 = g.append("line").attr("y1", 0).attr("y2", innerH).attr("stroke", color2).attr("stroke-width", 2).attr("stroke-dasharray", "4,4").attr("opacity", 0.55);
+
+      // Add labels
+      const label1 = g.append("text").attr("y", 15).attr("fill", color1).style("text-anchor", "middle").style("font-size", "16px").text("Known Good");
+      const label2 = g.append("text").attr("x", x(1.0)).attr("y", 15).attr("fill", color2).style("text-anchor", "middle").style("font-size", "16px").text("Uncertain");
+
+      const mu1 = 1.5;
+      const mu2 = 1.0;
+      const sigma2 = 0.6; // Fixed wide standard deviation for Arm 2
+
+      trueLine1.attr("x1", x(mu1)).attr("x2", x(mu1));
+      trueLine2.attr("x1", x(mu2)).attr("x2", x(mu2));
+
+      const slider = document.getElementById("sigma-slider");
+      const sigmaVal = document.getElementById("sigma-val");
+      const probVal = document.getElementById("prob-val");
+
+      function update() {
+        const sigma1 = parseFloat(slider.value);
+        sigmaVal.textContent = sigma1.toFixed(2);
+
+        const data1 = d3.range(-1, 4, 0.02).map(v => ({x: v, y: normalPdf(v, mu1, sigma1)}));
+        const data2 = d3.range(-1, 4, 0.02).map(v => ({x: v, y: normalPdf(v, mu2, sigma2)}));
+
+        pathArea1.datum(data1).attr("d", area);
+        pathLine1.datum(data1).attr("d", line);
+
+        pathArea2.datum(data2).attr("d", area);
+        pathLine2.datum(data2).attr("d", line);
+
+        label1.attr("x", x(mu1));
+
+        const diffMean = mu2 - mu1; // Expected difference (Arm 2 - Arm 1)
+        const diffStd = Math.sqrt(sigma1*sigma1 + sigma2*sigma2);
+        const prob = 1 - normalCdf(0, diffMean, diffStd); // P(Arm 2 - Arm 1 > 0)
+
+        probVal.textContent = (prob * 100).toFixed(1) + "%";
+      }
+
+      slider.addEventListener("input", update);
+      update();
+    })();
+  </script>
+  <p>
+      Ok, we are basically done, now let's compare it with other methods.
   </p>
   <h2>Comparison with known methods</h2>
 
@@ -823,7 +1068,7 @@
     - Not a reviewer
   </blockquote>
   <p>
-    To benchmark this method I replicated the 10-armed testbed parameter study with the methods used in Chapter&nbsp;2 of Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.<br>
+    To benchmark this method I replicated the 10-armed testbed parameter study with the methods used in Chapter&nbsp;2 of Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.<br><br>
     Each of the algorithms has a hyperparameter that balances exploration vs. exploitation. To cut things short I'm going to give you a brief overview of each methods in the cards below.
   </p>
   <div class="algo-grid l-page-outset">
