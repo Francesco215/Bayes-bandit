@@ -524,7 +524,7 @@
   <h2>What is The $K$-armed bandit problem?</h2>
   <p>
       The $K$-armed bandit problem is perhaps one of the worse named pieces of math, However it has important applications
-      in reinforcement learning. Let's see how it works. 
+      in reinforcement learning. Let's see how it works.
   </p>
   <p>
     You walk into a room with $K$ slot machines. Each one pays out a noisy reward drawn from its own
@@ -534,8 +534,8 @@
 
   <figure>
     <div class="bb-card">
-      <h3>Pull the hidden arms</h3>
-      <p class="bb-sub">The true reward distributions are hidden. Each pull drops one reward into a bucket; enough evidence makes each arm's empirical violin appear.</p>
+      <h3>Find the best strategy by hand!</h3>
+      <p class="bb-sub">The true reward distributions are hidden at the start. Each pull drops one reward into a bucket; enough evidence makes each arm's empirical violin appear. Try to win as much reward as possible!</p>
       <div class="bb-plot-wrap">
         <svg id="evidence-svg" viewBox="0 0 1100 480"></svg>
       </div>
@@ -576,7 +576,7 @@
       We will see, that the answer to this existential question follows easly from the math once we ask ourselfes the question:
   </p>
   <blockquote>
-      Given the information available, what is the best action I can take? 
+      Given the information available, what is the best action I can take?
   </blockquote>
 
   <h2>Setup: noisy arms, hidden means</h2>
@@ -789,7 +789,7 @@
       </div>
       <div class="mc-bottom-row">
         <div class="bb-plot-wrap mc-bars-wrap">
-          <svg id="mc-bars-svg" viewBox="0 0 900 460"></svg>
+          <svg id="mc-evidence-svg" viewBox="0 0 1100 480"></svg>
         </div>
         <aside class="bb-card mc-controls-aside">
           <div class="actions">
@@ -1310,7 +1310,7 @@
         <span class="arm-bar" style="background:${ARM_COLORS[k]}"></span>
         <span class="arm-num">${k + 1}</span>
         <span class="arm-n" data-evidence-armn="${k}">0</span>`;
-      btn.addEventListener("click", () => pullArm(k));
+      btn.addEventListener("click", () => pullArmFromPosteriorDemo(k));
       pullsBox.appendChild(btn);
     }
 
@@ -1352,7 +1352,8 @@
           .attr("y", d => yScale(d.y1) + 1)
           .attr("width", maxHalfWidth * 2)
           .attr("height", d => Math.max(1, yScale(d.y0) - yScale(d.y1) - 2))
-          .attr("rx", 2);
+          .attr("opacity", 0);
+          // .attr("rx", 2)
         guides.exit().remove();
 
         const filled = g.selectAll("rect.bucket-fill").data(buckets);
@@ -1412,13 +1413,9 @@
     sharedState.listeners.push(draw);
     document.getElementById("evidence-thompson").addEventListener("click", () => policyStepWithMonteCarloTrace());
     document.getElementById("evidence-pull10").addEventListener("click", () => {
-      for (let i = 0; i < 10; i++) pullArm(Math.floor(Math.random() * K));
+      for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K));
     });
-    document.getElementById("evidence-reset").addEventListener("click", () => {
-      const postReset = document.getElementById("post-reset");
-      if (postReset) postReset.click();
-      else resetPulls();
-    });
+    document.getElementById("evidence-reset").addEventListener("click", () => resetPulls());
 
     draw();
   })();
@@ -1692,8 +1689,7 @@
      ============================================================ */
   (function mcFigure() {
     const stripSvg = d3.select("#mc-strip-svg");
-    const barsSvg = d3.select("#mc-bars-svg");
-    if (stripSvg.empty() || barsSvg.empty()) return;
+    if (stripSvg.empty()) return;
 
     // ----- Strip (top, full width) -----
     const SW = 1200, SH = 240;
@@ -1726,29 +1722,7 @@
     });
     const dotsLayer = stripRoot.append("g");
 
-    // ----- Bars (bottom-left) -----
-    const BW = 900, BH = 460;
-    const bm = { top: 28, right: 20, bottom: 56, left: 70 };
-    const barInnerW = BW - bm.left - bm.right;
-    const barInnerH = BH - bm.top - bm.bottom;
-    const barRoot = barsSvg.append("g").attr("transform", `translate(${bm.left},${bm.top})`);
 
-    const barX = d3.scaleBand().domain(d3.range(K)).range([0, barInnerW]).padding(0.25);
-    const barY = d3.scaleLinear().domain([0, 1]).range([barInnerH, 0]);
-    barRoot.append("g")
-      .attr("transform", `translate(0,${barInnerH})`)
-      .call(d3.axisBottom(barX).tickFormat(d => `arm ${d + 1}`))
-      .call(g => g.selectAll("text").attr("font-size", 14));
-    barRoot.append("g")
-      .call(d3.axisLeft(barY).ticks(5).tickFormat(d3.format(".0%")))
-      .call(g => g.selectAll("text").attr("font-size", 13));
-    barRoot.append("text")
-      .attr("transform", `translate(${barInnerW/2},${barInnerH + 44})`)
-      .attr("text-anchor", "middle").attr("font-size", 14)
-      .text("Fraction of arm pulls");
-
-    const barsLayer = barRoot.append("g");
-    const barLabels = barRoot.append("g");
 
     // State
     let draws = [];
@@ -1808,31 +1782,7 @@
           // .attr("stroke-width", s => s.arm === d.highlight ? 1 : 0)
       });
 
-      // bars
-      const probs = wins.map(w => totalDraws > 0 ? w / totalDraws : 0);
-      const bars = barsLayer.selectAll("rect").data(probs);
-      bars.enter().append("rect")
-        .merge(bars)
-        .attr("x", (_, i) => barX(i))
-        .attr("y", d => barY(d))
-        .attr("width", barX.bandwidth())
-        .attr("height", d => barInnerH - barY(d))
-        .attr("fill", (_, i) => ARM_COLORS[i])
-        .attr("opacity", 0.85);
-      bars.exit().remove();
 
-      const labels = barLabels.selectAll("text").data(probs);
-      labels.enter().append("text")
-        .merge(labels)
-        .attr("x", (_, i) => barX(i) + barX.bandwidth() / 2)
-        .attr("y", d => barY(d) - 8)
-        .attr("text-anchor", "middle")
-        .attr("font-size", 14)
-        .attr("font-weight", 600)
-        .attr("font-variant-numeric", "tabular-nums")
-        .attr("fill", "#222")
-        .text(d => totalDraws > 0 ? (d * 100).toFixed(0) + "%" : "—");
-      labels.exit().remove();
 
       // text
       statsEl.textContent = totalDraws > 0
@@ -1903,6 +1853,124 @@
     // Re-render bars/strip whenever pulls change (without resetting tally).
     sharedState.listeners.push(() => { draw(); });
 
+    draw();
+  })();
+
+  /* ============================================================
+     Figure 4a — Monte Carlo Evidence Violin Plot
+     ============================================================ */
+  (function mcEvidenceFigure() {
+    const svg = d3.select("#mc-evidence-svg");
+    if (svg.empty()) return;
+    const W = 1100, H = 480;
+    const margin = { top: 28, right: 24, bottom: 48, left: 60 };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+    const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const bucketCount = 24;
+    const yMin = -4.5;
+    const yMax = 4.5;
+    const bucketStep = (yMax - yMin) / bucketCount;
+    const xScale = d3.scaleBand().domain(d3.range(K)).range([0, innerW]).padding(0.35);
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([innerH, 0]);
+
+    root.append("g")
+      .attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(xScale).tickFormat(d => `arm ${d + 1}`))
+      .call(g => g.selectAll("text").attr("font-size", 13));
+    root.append("g")
+      .call(d3.axisLeft(yScale).ticks(7))
+      .call(g => g.selectAll("text").attr("font-size", 12));
+    root.append("text")
+      .attr("transform", `translate(${innerW/2},${innerH + 36})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Arm");
+    root.append("text")
+      .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 13)
+      .text("Observed reward");
+    root.append("line")
+      .attr("x1", 0).attr("x2", innerW)
+      .attr("y1", yScale(0)).attr("y2", yScale(0))
+      .attr("stroke", "#999")
+      .attr("stroke-dasharray", "4 4");
+
+    const bucketLayer = root.append("g");
+    const lastLayer = root.append("g");
+
+    function bucketize(samples) {
+      const counts = Array(bucketCount).fill(0);
+      samples.forEach(r => {
+        const idx = Math.max(0, Math.min(bucketCount - 1, Math.floor((r - yMin) / bucketStep)));
+        counts[idx] += 1;
+      });
+      return counts.map((count, i) => ({
+        count,
+        y0: yMin + i * bucketStep,
+        y1: yMin + (i + 1) * bucketStep,
+        yc: yMin + (i + 0.5) * bucketStep
+      }));
+    }
+
+    function draw() {
+      const allBuckets = sharedState.pulls.map(p => bucketize(p.samples));
+      const maxCount = Math.max(1, d3.max(allBuckets.flat(), d => d.count) || 1);
+      const groups = bucketLayer.selectAll("g.evidence-arm").data(allBuckets);
+      groups.exit().remove();
+      const merged = groups.enter().append("g")
+        .attr("class", "evidence-arm")
+        .merge(groups)
+        .attr("transform", (_, i) => `translate(${xScale(i)},0)`);
+
+      merged.each(function (buckets, i) {
+        const g = d3.select(this);
+        const bw = xScale.bandwidth();
+        const bx = bw / 2;
+        const maxHalfWidth = bw / 2;
+
+        const guides = g.selectAll("rect.bucket-guide").data(buckets);
+        guides.enter().append("rect")
+          .attr("class", "bucket-guide evidence-bucket-empty")
+          .merge(guides)
+          .attr("x", bx - maxHalfWidth)
+          .attr("y", d => yScale(d.y1) + 1)
+          .attr("width", maxHalfWidth * 2)
+          .attr("height", d => Math.max(1, yScale(d.y0) - yScale(d.y1) - 2))
+          .attr("opacity", 0);
+        guides.exit().remove();
+
+        const filled = g.selectAll("rect.bucket-fill").data(buckets);
+        filled.enter().append("rect")
+          .attr("class", "bucket-fill")
+          .merge(filled)
+          .attr("x", d => bx - (d.count / maxCount) * maxHalfWidth)
+          .attr("y", d => yScale(d.y1) + 1)
+          .attr("width", d => (d.count / maxCount) * maxHalfWidth * 2)
+          .attr("height", Math.max(1, yScale(yMin) - yScale(yMin + bucketStep) - 2))
+          .attr("rx", 2)
+          .attr("fill", ARM_COLORS[i])
+          .attr("opacity", d => d.count > 0 ? 0.78 : 0);
+        filled.exit().remove();
+      });
+
+      const last = sharedState.lastPull ? [sharedState.lastPull] : [];
+      const lastDot = lastLayer.selectAll("circle.last-reward").data(last);
+      lastDot.enter().append("circle")
+        .attr("class", "last-reward")
+        .merge(lastDot)
+        .attr("cx", d => xScale(d.arm) + xScale.bandwidth() / 2)
+        .attr("cy", d => yScale(Math.max(yMin, Math.min(yMax, d.reward))))
+        .attr("r", 5)
+        .attr("fill", d => ARM_COLORS[d.arm])
+        .attr("stroke", "#222")
+        .attr("stroke-width", 1.5);
+      lastDot.exit().remove();
+    }
+
+    sharedState.listeners.push(draw);
     draw();
   })();
 
