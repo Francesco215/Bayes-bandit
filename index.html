@@ -1159,26 +1159,22 @@
   </p>
 
 
-  <h2>Aleatoric vs. epistemic, falling out of the math</h2>
+  <h2>Conclusion</h2>
   <p>
-    One more thing the NIG posterior gives us almost for free. The predictive variance of the next
-    reward decomposes as
-    $$
-    \mathrm{Var}(R_{k,n+1}\mid D_k)
-    \;=\;
-    \underbrace{\frac{\beta_{k,n}}{\alpha_{k,n}-1}}_{\text{aleatoric}}
-    \;+\;
-    \underbrace{\frac{1}{\kappa_{k,n}}\!\cdot\!\frac{\beta_{k,n}}{\alpha_{k,n}-1}}_{\text{epistemic}}.
-    $$
-    The first term is irreducible reward noise &mdash; we'd see it even if we knew the arm perfectly. The
-    second shrinks as $1/\kappa_{k,n}=1/(\kappa_0+n_k)$, i.e. with every pull. <em>Exploration should
-    chase the second term, not the first.</em> A noisy arm isn't necessarily an uncertain arm. The
-    classical baselines blur this distinction; the Bayesian one gets it for free.
+      Curiosity, is not a bonus term, a mood, or a hand-written urge to try random things: <b>It is what optimal action looks like when your beliefs are uncertain.</b>
   </p>
-
-  <h2>Closing thoughts</h2>
   <p>
-      Write something cool
+      The agent is not exploring because we told it to explore. It explores because uncertainty changes what “best action” means.
+  </p>
+  <p>
+      In this blog we've explored it applied to the $K$-armed bandit problem. I believe this concept extends beyond this.<br>
+      The next environment I am working on is a chess engine built around the same idea. In a
+      bandit, curiosity decides which arm deserves another pull. In chess, it decides which branch
+      of the game tree deserves another look: not just the move that currently looks best, but the
+      move whose uncertainty could still change the answer.
+  </p>
+  <p>
+      If you want to contribute in any way, reach out! 🐝
   </p>
 
 </d-article>
