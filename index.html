@@ -962,18 +962,9 @@
     notifyMonteCarloDraw(draw, k, "manual");
   }
 
-  // The "Draw best arm" / streaming policy step:
-  //   1. Thompson-draw a winner.
-  //   2. Actually pull that winner (sampling state changes the world).
-  // Returns the draw payload so the MC widget can render the strip.
-  function policyStep() {
-    const draw = thompsonDraw();
-    pullArm(draw.best); // this calls notify()
-    return draw;
-  }
-
   function policyStepWithMonteCarloTrace() {
-    const draw = policyStep();
+    const draw = thompsonDraw();
+    pullArm(draw.best);
     notifyMonteCarloDraw(draw, draw.best, "policy");
     return draw;
   }
@@ -1227,7 +1218,7 @@
     sharedState.listeners.push(draw);
     document.getElementById("post-thompson").addEventListener("click", () => policyStepWithMonteCarloTrace());
     document.getElementById("post-pull10").addEventListener("click", () => {
-      for (let i = 0; i < 10; i++) pullArm(Math.floor(Math.random() * K));
+      for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K));
     });
     document.getElementById("post-reset").addEventListener("click", () => resetPulls());
 
@@ -1356,11 +1347,11 @@
           .merge(sampleDots)
           .attr("cx", 0)
           .attr("cy", s => stripY(Math.max(-4, Math.min(4, s.value))))
-          .attr("r", s => s.arm === d.highlight ? 4.6 : 2.8)
+          .attr("r", s => s.arm === d.highlight ? 4.0 : 3.0)
           .attr("fill", s => ARM_COLORS[s.arm])
-          .attr("stroke", s => s.arm === d.highlight ? "#222" : "none")
-          .attr("stroke-width", s => s.arm === d.highlight ? 1 : 0)
           .attr("opacity", s => s.arm === d.highlight ? 0.98 : 0.24);
+          // .attr("stroke", s => s.arm === d.highlight ? "#222" : "none")
+          // .attr("stroke-width", s => s.arm === d.highlight ? 1 : 0)
       });
 
       // bars
@@ -1399,13 +1390,6 @@
       pullsEl.textContent = `Total: ${totalN} · ${perArm}`;
     }
 
-    function resetDraws() {
-      draws = [];
-      wins = Array(K).fill(0);
-      totalDraws = 0;
-      draw();
-    }
-
     function stopStream() {
       if (timer !== null) {
         clearInterval(timer);
@@ -1431,7 +1415,7 @@
     });
     document.getElementById("mc-reset").addEventListener("click", () => {
       stopStream();
-      resetDraws();
+      document.getElementById("post-reset").click();
     });
 
     sharedState.mcDrawListeners.push(event => {
@@ -1441,10 +1425,25 @@
 
     // Reset MC tally when the world or prior changes (NOT on every pull —
     // that would wipe the strip while streaming the policy).
-    document.getElementById("arms-resample").addEventListener("click", () => resetDraws());
-    document.getElementById("post-reset").addEventListener("click", () => resetDraws());
+    document.getElementById("arms-resample").addEventListener("click", () => {
+      draws = [];
+      wins = Array(K).fill(0);
+      totalDraws = 0;
+      draw();
+    });
+    document.getElementById("post-reset").addEventListener("click", () => {
+      draws = [];
+      wins = Array(K).fill(0);
+      totalDraws = 0;
+      draw();
+    });
     ["prior-mu", "prior-kappa", "prior-alpha", "prior-beta"].forEach(id => {
-      document.getElementById(id).addEventListener("input", () => resetDraws());
+      document.getElementById(id).addEventListener("input", () => {
+        draws = [];
+        wins = Array(K).fill(0);
+        totalDraws = 0;
+        draw();
+      });
     });
 
     // Re-render bars/strip whenever pulls change (without resetting tally).
