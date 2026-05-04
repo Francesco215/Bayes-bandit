@@ -292,6 +292,35 @@
       font-style: italic;
     }
 
+    details.math-details {
+      border-left: 3px solid var(--bb-line);
+      margin: 1.4em 0 1.8em;
+      padding: 0.1em 0 0.1em 1em;
+      color: var(--bb-ink-soft);
+    }
+    details.math-details summary {
+      cursor: pointer;
+      color: var(--bb-ink);
+      font-weight: 600;
+    }
+    details.math-details[open] summary {
+      margin-bottom: 0.7em;
+    }
+
+    .svg-katex-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .svg-katex-box .katex {
+      font-size: inherit;
+      color: inherit;
+    }
+
     @media (max-width: 980px) {
       .bb-controls.l-gutter {
         border-left: none;
@@ -391,38 +420,61 @@
 
   <h2>A posterior over each arm</h2>
   <p>
-    The Bayesian recipe is the obvious one: put a prior on each arm's $(\mu_k,\sigma_k^2)$, update it with
-    every reward we see, then act on the resulting posterior. The conjugate choice for an unknown-mean,
-    unknown-variance Gaussian is the <em>Normal-Inverse-Gamma</em> prior:
+    For each arm, the Bayesian method maintains a Normal-Inverse-Gamma posterior over the unknown
+    Gaussian parameters:
     $$
-    \sigma_k^2 \sim \mathrm{InvGamma}(\alpha_0,\beta_0),
-    \qquad
-    \mu_k\mid\sigma_k^2 \sim \mathcal N\!\left(\mu_0,\tfrac{\sigma_k^2}{\kappa_0}\right).
+    p(\mu_k,\sigma_k^2 \mid D_k)
     $$
-    The four hyperparameters $(\mu_0,\kappa_0,\alpha_0,\beta_0)$ encode "what we believe before pulling
-    anything." After observing rewards $D_k=\{r_{k,1},\dots,r_{k,n_k}\}$ with sum $s_k$ and squared-sum
-    $q_k$, conjugacy gives us a closed-form posterior of the same family:
-    $$
-    \kappa_{k,n} = \kappa_0 + n_k,
-    \qquad
-    \mu_{k,n} = \frac{\kappa_0\mu_0 + s_k}{\kappa_0 + n_k},
-    $$
-    $$
-    \alpha_{k,n} = \alpha_0 + \tfrac{n_k}{2},
-    \qquad
-    \beta_{k,n} = \beta_0 + \tfrac12\!\left(q_k + \kappa_0\mu_0^2 - \kappa_{k,n}\mu_{k,n}^2\right).
-    $$
+    where $D_k$ is the set of rewards observed from arm $k$.
   </p>
   <p>
-    What we actually want is the marginal posterior over the latent mean $\mu_k$ &mdash; that's the quantity
-    "is this arm any good?" lives in. Marginalizing $\sigma_k^2$ out of the NIG yields a Student-$t$:
+    The marginal posterior over the latent mean is Student-$t$:
     $$
-    \mu_k\mid D_k \;\sim\; t_{\nu_{k,n}}\!\left(\mu_{k,n},\,\tau_{k,n}\right),
-    \quad \nu_{k,n}=2\alpha_{k,n},
-    \quad \tau_{k,n}=\sqrt{\tfrac{\beta_{k,n}}{\alpha_{k,n}\kappa_{k,n}}}.
+    \mu_k \mid D_k \sim t
     $$
-    Pull arms below and watch each posterior tighten around its true mean.
+    This is the distribution shown below. Each blue curve represents what the model currently believes
+    about one arm's expected reward, not just the next noisy reward from that arm.
   </p>
+  <p>
+    Pull arms below and watch each posterior tighten as evidence accumulates. The true means are shown as
+    orange bars, so you can see the posterior move from prior uncertainty toward the hidden reward
+    landscape.
+  </p>
+
+  <details class="math-details">
+    <summary>Posterior update details</summary>
+    <p>
+      The conjugate prior for an unknown-mean, unknown-variance Gaussian is the
+      <em>Normal-Inverse-Gamma</em> prior:
+      $$
+      \sigma_k^2 \sim \mathrm{InvGamma}(\alpha_0,\beta_0),
+      \qquad
+      \mu_k\mid\sigma_k^2 \sim \mathcal N\!\left(\mu_0,\tfrac{\sigma_k^2}{\kappa_0}\right).
+      $$
+      The four hyperparameters $(\mu_0,\kappa_0,\alpha_0,\beta_0)$ encode what we believe before pulling
+      anything. After observing rewards $D_k=\{r_{k,1},\dots,r_{k,n_k}\}$ with sum $s_k$ and squared-sum
+      $q_k$, conjugacy gives us a closed-form posterior of the same family:
+      $$
+      \kappa_{k,n} = \kappa_0 + n_k,
+      \qquad
+      \mu_{k,n} = \frac{\kappa_0\mu_0 + s_k}{\kappa_0 + n_k},
+      $$
+      $$
+      \alpha_{k,n} = \alpha_0 + \tfrac{n_k}{2},
+      \qquad
+      \beta_{k,n} = \beta_0 + \tfrac12\!\left(q_k + \kappa_0\mu_0^2 - \kappa_{k,n}\mu_{k,n}^2\right).
+      $$
+    </p>
+    <p>
+      Marginalizing $\sigma_k^2$ out of the Normal-Inverse-Gamma posterior gives the Student-$t$
+      posterior over the latent mean:
+      $$
+      \mu_k\mid D_k \;\sim\; t_{\nu_{k,n}}\!\left(\mu_{k,n},\,\tau_{k,n}\right),
+      \quad \nu_{k,n}=2\alpha_{k,n},
+      \quad \tau_{k,n}=\sqrt{\tfrac{\beta_{k,n}}{\alpha_{k,n}\kappa_{k,n}}}.
+      $$
+    </p>
+  </details>
 
   <figure>
     <div class="bb-card">
@@ -881,6 +933,48 @@
   ];
   const K = 5;
 
+  function appendKatexLabel(parent, latex, opts = {}) {
+    const {
+      x = 0,
+      y = 0,
+      width = 160,
+      height = 28,
+      anchor = "middle",
+      valign = "middle",
+      rotate = 0,
+      fontSize = 26,
+      color = "#222",
+      className = ""
+    } = opts;
+    const xOffset = anchor === "middle" ? -width / 2 : anchor === "end" ? -width : 0;
+    const yOffset = valign === "middle" ? -height / 2 : valign === "bottom" ? -height : 0;
+    const justify = anchor === "middle" ? "center" : anchor === "end" ? "flex-end" : "flex-start";
+
+    const label = parent.append("g")
+      .attr("class", `svg-katex-label ${className}`.trim())
+      .attr("transform", `translate(${x},${y})${rotate ? ` rotate(${rotate})` : ""}`);
+
+    const fo = label.append("foreignObject")
+      .attr("x", xOffset)
+      .attr("y", yOffset)
+      .attr("width", width)
+      .attr("height", height)
+      .style("overflow", "visible");
+
+    const div = fo.append("xhtml:div")
+      .attr("class", "svg-katex-box")
+      .style("justify-content", justify)
+      .style("font-size", `${fontSize}px`)
+      .style("color", color);
+
+    katex.render(latex, div.node(), {
+      displayMode: false,
+      throwOnError: false
+    });
+
+    return label;
+  }
+
   /* ---------------- world generation ---------------- */
   function makeWorld(opts) {
     const muScale = opts.muScale ?? 1.0;
@@ -1070,12 +1164,14 @@
           .attr("stroke", "#222")
           .attr("stroke-width", 2);
 
-        g.append("text")
-          .attr("x", bx + halfWidth * 0.6 + 4)
-          .attr("y", yScale(arm.mu) + 4)
-          .attr("font-size", 12)
-          .attr("font-style", "italic")
-          .text(`μ${i + 1} = ${arm.mu.toFixed(2)}`);
+        appendKatexLabel(g, `\\mu_{${i + 1}} = ${arm.mu.toFixed(2)}`, {
+          x: bx + halfWidth * 0.6 + 4,
+          y: yScale(arm.mu),
+          width: 184,
+          height: 44,
+          anchor: "start",
+          fontSize: 24
+        });
       });
     }
 
@@ -1112,15 +1208,18 @@
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).ticks(9))
       .call(g => g.selectAll("text").attr("font-size", 12));
-    root.append("g")
+    const yAxisG = root.append("g")
       .call(d3.axisLeft(yScale).ticks(5))
-      .call(g => g.selectAll("text").attr("font-size", 12));
+      .call(g => g.selectAll("text").attr("font-size", 12))
+      .call(g => g.select(".domain").attr("d", `M0,${innerH}V0`));
 
-    root.append("text")
-      .attr("transform", `translate(${innerW/2},${innerH + 38})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 13)
-      .text("Latent mean μₖ");
+    appendKatexLabel(root, "\\text{Latent mean }\\mu_k", {
+      x: innerW / 2,
+      y: innerH + 38,
+      width: 360,
+      height: 48,
+      fontSize: 26
+    });
     root.append("text")
       .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
       .attr("text-anchor", "middle")
@@ -1160,16 +1259,20 @@
         .attr("opacity", 0.55);
       trueSel.exit().remove();
 
-      const trueLab = trueLayer.selectAll("text.truelab").data(sharedState.arms);
-      trueLab.enter().append("text").attr("class", "truelab")
-        .merge(trueLab)
-        .attr("x", d => xScale(d.mu) + 4)
-        .attr("y", (_, i) => 14 + i * 14)
-        .attr("font-size", 11)
-        .attr("font-style", "italic")
-        .attr("fill", (_, i) => ARM_COLORS[i])
-        .text((d, i) => `μ${i + 1}*`);
-      trueLab.exit().remove();
+      // True mean labels
+      trueLayer.selectAll("g.truelab").remove();
+      sharedState.arms.forEach((arm, i) => {
+        appendKatexLabel(trueLayer, `\\mu_{${i + 1}}^\\star`, {
+          x: xScale(arm.mu) + 4,
+          y: 14 + i * 14,
+          width: 80,
+          height: 36,
+          anchor: "start",
+          fontSize: 30,
+          color: ARM_COLORS[i],
+          className: "truelab"
+        });
+      });
 
       // Posterior densities
       const xs = d3.range(220).map(i => -4 + (8 * i) / 219);
@@ -1180,8 +1283,9 @@
       // dynamic y-domain: cap at 2 so weak posteriors still show
       const maxY = Math.min(2.5, d3.max(allPosts.flat(), d => d.y) || 1.0);
       yScale.domain([0, Math.max(0.6, maxY * 1.05)]);
-      root.select("g:nth-of-type(2)").call(d3.axisLeft(yScale).ticks(5))
-        .selectAll("text").attr("font-size", 12);
+      yAxisG.call(d3.axisLeft(yScale).ticks(5))
+        .call(g => g.selectAll("text").attr("font-size", 12))
+        .call(g => g.select(".domain").attr("d", `M0,${innerH}V0`));
 
       const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y)).curve(d3.curveBasis);
       const area = d3.area().x(d => xScale(d.x)).y0(yScale(0)).y1(d => yScale(d.y)).curve(d3.curveBasis);
@@ -1266,10 +1370,14 @@
       .attr("transform", `translate(${stripInnerW/2},${stripInnerH + 32})`)
       .attr("text-anchor", "middle").attr("font-size", 12)
       .text("Most recent 200 Thompson draws");
-    stripRoot.append("text")
-      .attr("transform", `translate(-44,${stripInnerH/2}) rotate(-90)`)
-      .attr("text-anchor", "middle").attr("font-size", 12)
-      .text("Sampled μ̃ₖ");
+    appendKatexLabel(stripRoot, "\\textrm{Sampled }\\tilde{\\mu}_k", {
+      x: -44,
+      y: stripInnerH / 2,
+      width: 240,
+      height: 44,
+      rotate: -90,
+      fontSize: 20
+    });
     const dotsLayer = stripRoot.append("g");
 
     // ----- Bars (bottom-left) -----
@@ -1291,7 +1399,7 @@
     barRoot.append("text")
       .attr("transform", `translate(${barInnerW/2},${barInnerH + 44})`)
       .attr("text-anchor", "middle").attr("font-size", 14)
-      .text("P(k* = k | D)");
+      .text("Fraction of arm pulls");
 
     const barsLayer = barRoot.append("g");
     const barLabels = barRoot.append("g");
@@ -1460,23 +1568,23 @@
     if (svg.empty()) return;
 
     const data = [
-      { algo: "epsilon-greedy",   param: "ε",   color: "#7aa6ff", points: [
+      { algo: "epsilon-greedy",   param: "ε", latexParam: "\\varepsilon", color: "#7aa6ff", points: [
         [0.0078125, 1.2036], [0.015625, 1.2536], [0.03125, 1.3293],
         [0.0625, 1.3814], [0.125, 1.3210], [0.25, 1.1555],
       ]},
-      { algo: "gradient bandit",  param: "α",   color: "#7e6ad7", points: [
+      { algo: "gradient bandit",  param: "α", latexParam: "\\alpha", color: "#7e6ad7", points: [
         [0.03125, 1.1570], [0.0625, 1.3538], [0.125, 1.4527],
         [0.25, 1.4735], [0.5, 1.4149], [1.0, 1.2436], [2.0, 1.0574],
       ]},
-      { algo: "optimistic greedy",param: "Q₀",  color: "#d63b76", points: [
+      { algo: "optimistic greedy",param: "Q₀", latexParam: "Q_0", color: "#d63b76", points: [
         [0.25, 1.3421], [0.5, 1.4346], [1.0, 1.5125],
         [2.0, 1.4701], [4.0, 1.3828],
       ]},
-      { algo: "UCB",              param: "c",   color: "#3764e6", points: [
+      { algo: "UCB",              param: "c", latexParam: "c", color: "#3764e6", points: [
         [0.0625, 1.4847], [0.125, 1.4839], [0.25, 1.5106],
         [0.5, 1.5401], [1.0, 1.5490], [2.0, 1.4567], [4.0, 1.2227],
       ]},
-      { algo: "Bayesian P(best)", param: "β₀",  color: "#e67814", points: [
+      { algo: "Bayesian P(best)", param: "β₀", latexParam: "\\beta_0", color: "#e67814", points: [
         [0.125, 1.3332], [0.25, 1.4418], [0.5, 1.5117],
         [1.0, 1.5332], [2.0, 1.5372], [4.0, 1.5220],
         [8.0, 1.4917], [16.0, 1.4594],
@@ -1522,11 +1630,14 @@
       .call(g => g.selectAll("text").attr("font-size", 12))
       .call(g => g.select(".domain").attr("stroke", "#888"));
 
-    root.append("text")
-      .attr("x", innerW / 2).attr("y", innerH + 46)
-      .attr("text-anchor", "middle").attr("font-size", 13)
-      .attr("fill", "#444")
-      .text("Hyperparameter value (log scale) — ε / α / Q₀ / c / β₀");
+    appendKatexLabel(root, "\\text{Hyperparameter value (log scale)}\\;\\text{--}\\;\\varepsilon / \\alpha / Q_0 / c / \\beta_0", {
+      x: innerW / 2,
+      y: innerH + 46,
+      width: 820,
+      height: 48,
+      fontSize: 26,
+      color: "#444"
+    });
     root.append("text")
       .attr("transform", `translate(-50,${innerH/2}) rotate(-90)`)
       .attr("text-anchor", "middle").attr("font-size", 13)
@@ -1585,12 +1696,15 @@
         .attr("font-size", 13).attr("font-weight", 600)
         .attr("fill", "#222")
         .text(s.algo);
-      row.append("text")
-        .attr("x", 30).attr("y", 26)
-        .attr("font-size", 11)
-        .attr("fill", "#6a727a")
-        .attr("font-variant-numeric", "tabular-nums")
-        .text(`best ${s.param}=${best[0]} → ${best[1].toFixed(3)}`);
+      appendKatexLabel(row, `\\text{best }${s.latexParam}=${best[0]}\\to ${best[1].toFixed(3)}`, {
+        x: 30,
+        y: 22,
+        width: 340,
+        height: 36,
+        anchor: "start",
+        fontSize: 22,
+        color: "#6a727a"
+      });
     });
 
     // Hover readout
