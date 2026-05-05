@@ -1024,22 +1024,26 @@
         </div>
       </div>
       <figcaption>
-        Figure 5: Even as the blue arm narrows around a high mean, the orange arm's wide uncertainty around a lower mean creates a fat right tail, ensuring it still gets explored.
+          Figure 5: The known arm has a high but narrow posterior. The uncertain arm has a lower mean, but its wider posterior leaves enough right-tail probability that it can still sometimes look best.
       </figcaption>
     </figure>
 
     <div class="uncertainty-copy">
       <p>
-          It comes down to uncertainty. As the algorithm samples the winning arm, its posterior distribution narrows. We become confident in its high expected value. However, the arms we <em>haven't</em> pulled remain wide and highly uncertain.
+        Because the algorithm is not comparing only the means. It is comparing uncertain beliefs.
       </p>
       <p>
-          A wide distribution has "fat tails". Even if its mean is lower, the right tail stretches far enough that there is a stubborn, non-zero probability of drawing a value that beats the known winner. This structural optimism is what drives Thompson Sampling to occasionally explore unproven arms.
+        The arm we have pulled many times has a narrow posterior: we have a pretty good idea of how good it is. An arm we have barely tried has a wider posterior: its average might be lower, but there is still a real chance that it is better than it currently looks.
       </p>
       <p>
-        Thompson Sampling does not choose the uncertain arm because it has a separate desire to explore. It chooses it because, under the current posterior, that arm still has some probability of being the best. Each round is still greedy in a sense: the algorithm samples from its beliefs, then plays the arm that looks best in that sampled world.
+        That chance lives in the right tail. Every now and then, Thompson Sampling draws a sample from that tail, and in that sampled world the uncertain arm looks like the best option. So the algorithm tries it.
+      </p>
+      <p>
+        This is the key point: Thompson Sampling is not exploring because we added a separate exploration rule. It explores because uncertainty changes what “best” means.<br>
+        This leads us to the conclusion that actually:
       </p>
       <blockquote>
-          The amazing thing about this approach is that it shows that curiosity is an emergent phenomenon &mdash; not something that needs to be explicitly programmed into the algorithm!
+        <b>Curiosity is what optimal action looks like when your beliefs are uncertain.</b>
       </blockquote>
     </div>
   </div>
@@ -1106,8 +1110,8 @@
       const trueLine2 = g.append("line").attr("y1", 0).attr("y2", innerH).attr("stroke", color2).attr("stroke-width", 2).attr("stroke-dasharray", "4,4").attr("opacity", 0.55);
 
       // Add labels
-      const label1 = g.append("text").attr("y", 18).attr("fill", color1).style("text-anchor", "middle").style("font-size", "18px").text("Known Good");
-      const label2 = g.append("text").attr("x", x(1.0)).attr("y", 18).attr("fill", color2).style("text-anchor", "middle").style("font-size", "18px").text("Uncertain");
+      const label1 = g.append("text").attr("y", 32).attr("fill", color1).style("text-anchor", "start").style("font-size", "28px").style("font-weight", 700).text("Known Good");
+      const label2 = g.append("text").attr("x", x(1.0) - 14).attr("y", 32).attr("fill", color2).style("text-anchor", "end").style("font-size", "28px").style("font-weight", 700).text("Uncertain");
 
       const mu1 = 1.5;
       const mu2 = 1.0;
@@ -1132,7 +1136,7 @@
         pathArea2.datum(data2).attr("d", area);
         pathLine2.datum(data2).attr("d", line);
 
-        label1.attr("x", x(mu1));
+        label1.attr("x", x(mu1) + 14);
 
         const diffMean = mu2 - mu1; // Expected difference (Arm 2 - Arm 1)
         const diffStd = Math.sqrt(sigma1*sigma1 + sigma2*sigma2);
@@ -1242,14 +1246,36 @@
     $$
     A_t \;=\; \arg\max_k\!\left[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\right].
     $$
-    I had a whole section explaining the tradeoffs and differences between UCB and the Bayesian method, but honestly that's not that interesting.<br>
-    Let's just jump straight to the conclusion!
+    Both methods are trying to spend samples where uncertainty could still matter. UCB does this
+    explicitly, by adding an uncertainty bonus to the empirical mean. The Bayesian method does it
+    implicitly, by sampling from the posterior and asking which arm wins in that sampled world.
+  </p>
+
+  <h3>Relationship to other theories</h3>
+  <p>
+    This is not meant to be a new theory of bandits. The point of this blog post is to give an
+    intuition for known methods: curiosity can be understood as the behavior that falls out when an
+    agent acts optimally under uncertain beliefs. The sampling-the-winner idea is closely related to
+    Thompson sampling and posterior probability matching, going back to W.&nbsp;R.&nbsp;Thompson's 1933
+    paper<d-cite key="thompson1933"></d-cite> and modern treatments such as Russo et al.'s
+    tutorial<d-cite key="russo2018tutorial"></d-cite>.
+  </p>
+  <p>
+    The slightly different emphasis here is the best-arm-identification view: instead of asking only
+    which arm has the highest current estimate, we ask for the posterior probability that each arm is
+    truly the best. That framing has also been studied directly in the Bayesian best-arm-identification
+    literature<d-cite key="russo2016bestarm"></d-cite><d-cite key="guha2014thompson"></d-cite>.
+    I find it useful because it makes the "curiosity" story precise: an arm is worth trying when its
+    uncertainty still leaves meaningful probability mass on it being the best.
+  </p>
+  <p>
+      Let's just jump straight to the conclusion!
   </p>
 
 
   <h2>Conclusion</h2>
   <p>
-      Curiosity, is not a bonus term, a mood, or a hand-written urge to try random things:
+      In this blog post we discovered that curiosity, is not a bonus term, a mood, or a hand-written urge to try random things:
   </p>
   <blockquote>
        <b>Curiosity is what optimal action looks like when your beliefs are uncertain</b>
@@ -1267,7 +1293,7 @@
       move whose uncertainty could still change the answer.
   </p>
   <p>
-      I hope you found this interesting. If you want to contribute in any way, reach out! 🐝
+      I hope you found this interesting. If you want to help out in any way, reach out! 🐝
   </p>
 
 </d-article>
@@ -1275,12 +1301,12 @@
 <d-appendix>
   <h3>Acknowledgements</h3>
   <p>
-    The Bayesian sampling-the-winner idea is closely related to Thompson sampling and posterior
-    probability matching, going back to W.&nbsp;R.&nbsp;Thompson's 1933 paper<d-cite key="thompson1933"></d-cite>
-    and recent treatments like Russo et al.'s tutorial<d-cite key="russo2018tutorial"></d-cite>. The
-    best-arm-identification framing &mdash; where the posterior probability of being optimal is the object
-    of interest &mdash; has been studied extensively in the Bayesian best-arm-identification
-    literature<d-cite key="russo2016bestarm"></d-cite><d-cite key="guha2014thompson"></d-cite>.
+    I want to thank <a href="https://the-puzzler.github.io/">Matteo Peluso</a> for the feedback.
+  </p>
+  <p>
+      This blog post is a writeup that I did after doing a weekend project.
+      You can find the code for all experiments and insights into my development process
+      in the relative <a href="https://github.com/Francesco215/Bayes-bandit">github repository</a>
   </p>
 
   <h3>Contact</h3>
@@ -1301,7 +1327,6 @@
       }
   </pre>
 
-  <h3>References</h3>
   <d-bibliography>
     <script type="text/bibtex">
       @article{thompson1933,
