@@ -42,6 +42,8 @@
 
     figcaption {
       text-wrap: pretty;
+      font-size: 15px;
+      line-height: 1.5;
     }
 
     .l-side {
@@ -109,7 +111,8 @@
     }
     .bb-card .bb-sub {
       margin: 0 0 12px;
-      font-size: 13px;
+      font-size: 15px;
+      line-height: 1.4;
       color: var(--bb-ink-soft);
     }
     .bb-plot-wrap {
@@ -169,7 +172,7 @@
     }
     .bb-controls h4 {
       margin: 18px 0 10px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
     }
     .bb-controls h4:first-child { margin-top: 0; }
@@ -184,7 +187,7 @@
     }
     .control-row label {
       margin: 0;
-      font-size: 12px;
+      font-size: 14px;
       color: var(--bb-ink);
       white-space: nowrap;
       justify-self: end;
@@ -199,7 +202,7 @@
       text-align: right;
       min-width: 48px;
       font-variant-numeric: tabular-nums;
-      font-size: 12px;
+      font-size: 14px;
       color: var(--bb-blue);
       font-weight: 600;
     }
@@ -217,7 +220,7 @@
       border: 1px solid #a7afb5;
       background: rgba(255, 255, 255, 0.46);
       color: #444;
-      font-size: 12px;
+      font-size: 14px;
       cursor: pointer;
       font-family: inherit;
     }
@@ -236,7 +239,7 @@
 
     .stat-line {
       margin: 6px 0;
-      font-size: 13px;
+      font-size: 14px;
       color: var(--bb-ink);
       font-variant-numeric: tabular-nums;
     }
@@ -320,7 +323,7 @@
       border-radius: 2px;
     }
     .arm-pulls button .arm-num {
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 700;
       color: #222;
       letter-spacing: -0.01em;
@@ -328,12 +331,12 @@
     }
     .arm-pulls button .arm-n {
       font-variant-numeric: tabular-nums;
-      font-size: 10px;
+      font-size: 12px;
       color: #6a727a;
       line-height: 1;
     }
     .arm-pulls-label {
-      font-size: 11px;
+      font-size: 13px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #6a727a;
@@ -392,7 +395,7 @@
       display: block;
       margin-bottom: 7px;
       color: var(--bb-blue);
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
       line-height: 1.25;
     }
@@ -405,7 +408,7 @@
       flex: 0 0 42%;
       text-align: right;
       color: var(--bb-ink-soft);
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.25;
     }
     .uncertainty-probability strong {
@@ -430,12 +433,12 @@
       stroke-width: 1;
     }
     .param-legend {
-      font-size: 12px;
+      font-size: 14px;
     }
     .param-legend caption {
       padding: 0 0 6px;
       text-align: left;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -769,7 +772,7 @@
       Given the information available, what is the best action I can take?
   </blockquote>
 
-  <h2>Setup: noisy arms, hidden means</h2>
+  <h2>Setup: noisy arms, hidden average rewards</h2>
   <p>
     Each arm $k\in\{1,\dots,K\}$ has a true expected reward $\mu_k$ and an intrinsic noise level $\sigma_k$,
     both unknown to us. Pulling arm $k$ produces a reward
@@ -777,7 +780,7 @@
     r_{k,i}\mid\mu_k,\sigma_k^2 \;\sim\; \mathcal N(\mu_k,\sigma_k^2).
     $$
     Figure&nbsp;2 shows the five arms freshly sampled from the environment used in the study. The thick
-    bar marks the latent mean $\mu_k$; the violin shows the spread of rewards you'd actually see.
+    bar marks the true average reward $\mu_k$; the violin shows the spread of rewards you'd actually see.
   </p>
 
   <figure>
@@ -813,7 +816,7 @@
     $$
   </p>
   <p>
-    If we focus just on the arm's hidden mean, that posterior becomes a Student-$t$ distribution:
+    If we focus just on the arm's true average reward, that posterior becomes a Student-$t$ distribution:
     $$
     \mu_k \mid D_k \sim t
     $$
@@ -857,7 +860,7 @@
     </p>
     <p>
       Marginalizing $\sigma_k^2$ out of the Normal-Inverse-Gamma posterior gives the Student-$t$
-      posterior over the latent mean:
+      posterior over the true average reward:
       $$
       \mu_k\mid D_k \;\sim\; t_{\nu_{k,n}}\!\left(\mu_{k,n},\,\tau_{k,n}\right),
       \quad \nu_{k,n}=2\alpha_{k,n},
@@ -868,15 +871,15 @@
 
   <figure>
     <div class="bb-card">
-      <h3>Posterior over each arm's latent mean</h3>
-      <p class="bb-sub">Click an arm to pull it once. Solid orange bars: true $\mu_k$. Blue curves: Student-$t$ posterior over $\mu_k$ given everything pulled so far.</p>
+      <h3>See how the model estimates the true average reward of each arm $\mu^\star$</h3>
+      <p class="bb-sub">Click the buttons on the right to see what happens.</p>
       <div class="bb-plot-wrap">
         <svg id="post-svg" viewBox="0 0 1100 460"></svg>
       </div>
     </div>
     <figcaption>
-      Figure 3: As you sample each arm, $\kappa_{k,n}$ grows and the posterior on $\mu_k$ collapses toward $\mu_{k,n}$. Notice how
-      noisier arms (large $\sigma_k$) take more pulls to pin down than quiet ones.
+    Figure 3: The vertical lines marked with $\mu^\star$ represent the true average reward of each arm.<br>
+      As you sample each arm, the predicted distribution $p(\mu | D)$ hones in onto the true average reward $\mu^\star$
     </figcaption>
   </figure>
   <div id="post-controls" class="bb-controls l-gutter">
@@ -919,7 +922,7 @@
   </blockquote>
   <p>
     We can translate that question into the posteriors we just built. For each arm $k$, ask how likely
-    it is that its latent mean is larger than every other arm's estimated mean:
+    it is that its true average reward is larger than every other arm's estimated average reward:
     $$
     \mathbb P(k^\star = k\mid D) \;=\; \mathbb P\!\big(\mu_k\ge \mu_j\;\forall j\ne k\,\big|\,D\big).
     $$
@@ -1009,9 +1012,9 @@
           <div class="uncertainty-control-band">
             <div class="uncertainty-slider-block">
               <label for="sigma-slider">
-                Known Good Arm Std Dev: <span id="sigma-val">0.50</span>
+                Good arm accuracy
               </label>
-              <input type="range" id="sigma-slider" min="0.01" max="1.0" step="0.01" value="0.5">
+              <input type="range" id="sigma-slider" min="0.01" max="1.0" step="0.01" value="0.51">
             </div>
             <div class="uncertainty-probability">
               Probability of the uncertain arm having a better mean:<br>
@@ -1021,7 +1024,7 @@
         </div>
       </div>
       <figcaption>
-        Figure 4.5: Even as the blue arm narrows around a high mean, the orange arm's wide uncertainty around a lower mean creates a fat right tail, ensuring it still gets explored.
+        Figure 5: Even as the blue arm narrows around a high mean, the orange arm's wide uncertainty around a lower mean creates a fat right tail, ensuring it still gets explored.
       </figcaption>
     </figure>
 
@@ -1071,11 +1074,11 @@
       g.append("g")
         .attr("transform", `translate(0,${innerH})`)
         .call(d3.axisBottom(x).ticks(10))
-        .call(axis => axis.selectAll("text").attr("font-size", 14));
+        .call(axis => axis.selectAll("text").attr("font-size", 16));
 
       const yAxisG = g.append("g")
         .call(d3.axisLeft(y).ticks(5))
-        .call(axis => axis.selectAll("text").attr("font-size", 14))
+        .call(axis => axis.selectAll("text").attr("font-size", 16))
         .call(axis => axis.select(".domain").attr("d", `M0,${innerH}V0`));
 
       const line = d3.line()
@@ -1103,8 +1106,8 @@
       const trueLine2 = g.append("line").attr("y1", 0).attr("y2", innerH).attr("stroke", color2).attr("stroke-width", 2).attr("stroke-dasharray", "4,4").attr("opacity", 0.55);
 
       // Add labels
-      const label1 = g.append("text").attr("y", 15).attr("fill", color1).style("text-anchor", "middle").style("font-size", "16px").text("Known Good");
-      const label2 = g.append("text").attr("x", x(1.0)).attr("y", 15).attr("fill", color2).style("text-anchor", "middle").style("font-size", "16px").text("Uncertain");
+      const label1 = g.append("text").attr("y", 18).attr("fill", color1).style("text-anchor", "middle").style("font-size", "18px").text("Known Good");
+      const label2 = g.append("text").attr("x", x(1.0)).attr("y", 18).attr("fill", color2).style("text-anchor", "middle").style("font-size", "18px").text("Uncertain");
 
       const mu1 = 1.5;
       const mu2 = 1.0;
@@ -1114,12 +1117,11 @@
       trueLine2.attr("x1", x(mu2)).attr("x2", x(mu2));
 
       const slider = document.getElementById("sigma-slider");
-      const sigmaVal = document.getElementById("sigma-val");
       const probVal = document.getElementById("prob-val");
 
       function update() {
-        const sigma1 = parseFloat(slider.value);
-        sigmaVal.textContent = sigma1.toFixed(2);
+        const accuracy = parseFloat(slider.value);
+        const sigma1 = 1.01 - accuracy;
 
         const data1 = d3.range(-1, 4, 0.02).map(v => ({x: v, y: normalPdf(v, mu1, sigma1)}));
         const data2 = d3.range(-1, 4, 0.02).map(v => ({x: v, y: normalPdf(v, mu2, sigma2)}));
@@ -1194,14 +1196,14 @@
       </p>
     </div>
     <figcaption>
-      Figure 5: Average reward over the first 1000 steps as a function of each algorithm's tuned
+      Figure 6: Average reward over the first 1000 steps as a function of each algorithm's tuned
       parameter (log-spaced). Each curve sweeps a single hyperparameter; the dot marks each
       algorithm's best setting. UCB peaks at $c=1$, with Bayesian $\beta_0\!=\!2$ a close second.
     </figcaption>
   </figure>
   <div id="param-sweep-legend" class="bb-controls l-gutter">
     <aside class="bb-card param-legend-card">
-      <table class="bb-table param-legend" aria-label="Figure 5 ranked curve legend">
+      <table class="bb-table param-legend" aria-label="Figure 6 ranked curve legend">
         <caption>Ranked by reward</caption>
         <tbody>
           <tr style="--series-color:#3764e6;">
@@ -1247,15 +1249,20 @@
 
   <h2>Conclusion</h2>
   <p>
-      Curiosity, is not a bonus term, a mood, or a hand-written urge to try random things: <b>It is what optimal action looks like when your beliefs are uncertain.</b>
+      Curiosity, is not a bonus term, a mood, or a hand-written urge to try random things:
   </p>
+  <blockquote>
+       <b>Curiosity is what optimal action looks like when your beliefs are uncertain</b>
+  </blockquote>
   <p>
       The agent is not exploring because we told it to explore. It explores because uncertainty changes what “best action” means.
   </p>
   <p>
       In this blog we've explored it in the context of the $K$-armed bandit problem. I believe this concept extends beyond this setting.<br>
-      The next environment I am working on is a chess engine built around the same idea. In a
-      bandit, curiosity decides which arm deserves another pull. In chess, it decides which branch
+      The next environment I am working on is a chess engine built around the same idea.
+  </p>
+  <p>
+      In a bandit, curiosity decides which arm deserves another pull. In chess, it decides which branch
       of the game tree deserves another look: not just the move that currently looks best, but the
       move whose uncertainty could still change the answer.
   </p>
@@ -1285,12 +1292,14 @@
   <p>For attribution in academic contexts, please cite this work as</p>
   <pre class="citation-short">Sacco, "The Bayes Bandit", 2025</pre>
   <p>BibTeX:</p>
-  <pre class="citation-short">@article{sacco2025bayesbandit,
-  author = {Sacco, Francesco},
-  title  = {The Bayes Bandit},
-  year   = {2025},
-  url    = {https://github.com/Francesco215/Bayes-bandit}
-}</pre>
+  <pre class="citation-short">
+      @article{sacco2026bayesbandit,
+      author = {Sacco, Francesco},
+      title  = {The Bayes Bandit},
+      year   = {2026},
+      url    = {https://github.com/Francesco215/Bayes-bandit}
+      }
+  </pre>
 
   <h3>References</h3>
   <d-bibliography>
@@ -1371,7 +1380,7 @@
  * D3-based widgets:
  *   #evidence-svg : empirical bucket violins from observed pulls (Figure 1)
  *   #arms-svg     : violin plot of true reward distributions (Figure 2)
- *   #post-svg     : Student-t posteriors over each arm's latent mean (Figure 3)
+ *   #post-svg     : Student-t posteriors over each arm's true average reward (Figure 3)
  *   #mc-svg       : Monte Carlo estimator of P(k* = k | D)              (Figure 4)
  * Figures 1, 3 & 4 share pull state.
  */
@@ -1458,6 +1467,10 @@
     "#f1b840"  // yellow
   ];
   const K = 5;
+  const FIG_TICK_FONT = 16;
+  const FIG_AXIS_FONT = 17;
+  const FIG_SMALL_AXIS_FONT = 15;
+  const FIG_MATH_LABEL_FONT = 24;
 
   function appendKatexLabel(parent, latex, opts = {}) {
     const {
@@ -1682,25 +1695,38 @@
     root.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).tickFormat(d => `arm ${d + 1}`))
-      .call(g => g.selectAll("text").attr("font-size", 13));
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
     root.append("g")
       .call(d3.axisLeft(yScale).ticks(7))
-      .call(g => g.selectAll("text").attr("font-size", 12));
-    root.append("text")
-      .attr("transform", `translate(${innerW/2},${innerH + 36})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 13)
-      .text("Arm");
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
+    // root.append("text")
+    //   .attr("transform", `translate(${innerW/2},${innerH + 36})`)
+    //   .attr("text-anchor", "middle")
+    //   .attr("font-size", FIG_AXIS_FONT)
+    //   .text("Arm");
     root.append("text")
       .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
       .attr("text-anchor", "middle")
-      .attr("font-size", 13)
+      .attr("font-size", FIG_AXIS_FONT)
       .text("Observed reward");
     root.append("line")
       .attr("x1", 0).attr("x2", innerW)
       .attr("y1", yScale(0)).attr("y2", yScale(0))
       .attr("stroke", "#999")
       .attr("stroke-dasharray", "4 4");
+
+    root.append("g")
+      .attr("class", "evidence-arm-guides")
+      .selectAll("line")
+      .data(d3.range(K))
+      .enter().append("line")
+      .attr("x1", d => xScale(d) + xScale.bandwidth() / 2)
+      .attr("x2", d => xScale(d) + xScale.bandwidth() / 2)
+      .attr("y1", innerH)
+      .attr("y2", 0)
+      .attr("stroke", d => ARM_COLORS[d])
+      .attr("stroke-width", 1.5)
+      // .attr("stroke-opacity", 0.22);
 
     const bucketLayer = root.append("g");
     const lastLayer = root.append("g");
@@ -1856,21 +1882,21 @@
     root.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).tickFormat(d => `arm ${d + 1}`))
-      .call(g => g.selectAll("text").attr("font-size", 13));
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
     root.append("g")
       .call(d3.axisLeft(yScale).ticks(7))
-      .call(g => g.selectAll("text").attr("font-size", 12));
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
 
     // Axis titles
-    root.append("text")
-      .attr("transform", `translate(${innerW/2},${innerH + 36})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 13)
-      .text("Arm");
+    // root.append("text")
+    //   .attr("transform", `translate(${innerW/2},${innerH + 36})`)
+    //   .attr("text-anchor", "middle")
+    //   .attr("font-size", FIG_AXIS_FONT)
+    //   .text("Arm");
     root.append("text")
       .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
       .attr("text-anchor", "middle")
-      .attr("font-size", 13)
+      .attr("font-size", FIG_AXIS_FONT)
       .text("Reward distribution");
 
     // Zero line
@@ -1944,7 +1970,7 @@
           width: 184,
           height: 44,
           anchor: "start",
-          fontSize: 24
+          fontSize: FIG_MATH_LABEL_FONT
         });
       });
     }
@@ -1964,7 +1990,7 @@
   })();
 
   /* ============================================================
-     Figure 3 — posteriors over latent means
+     Figure 3 — posteriors over true average rewards
      ============================================================ */
   (function posteriorFigure() {
     const svg = d3.select("#post-svg");
@@ -1981,23 +2007,30 @@
     root.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).ticks(9))
-      .call(g => g.selectAll("text").attr("font-size", 12));
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
     const yAxisG = root.append("g")
       .call(d3.axisLeft(yScale).ticks(5))
-      .call(g => g.selectAll("text").attr("font-size", 12))
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT))
       .call(g => g.select(".domain").attr("d", `M0,${innerH}V0`));
 
-    appendKatexLabel(root, "\\text{Latent mean }\\mu_k", {
+    root.append("text")
+      .attr("transform", `translate(${innerW/2 - 10},${innerH + 40})`)
+      .attr("text-anchor", "end")
+      .attr("dominant-baseline", "middle")
+      .attr("font-size", FIG_AXIS_FONT)
+      .text("Average reward");
+    appendKatexLabel(root, "\\mu_k", {
       x: innerW / 2,
-      y: innerH + 38,
-      width: 360,
-      height: 48,
-      fontSize: 26
+      y: innerH + 39,
+      width: 70,
+      height: 36,
+      anchor: "start",
+      fontSize: FIG_MATH_LABEL_FONT
     });
     root.append("text")
       .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
       .attr("text-anchor", "middle")
-      .attr("font-size", 13)
+      .attr("font-size", FIG_AXIS_FONT)
       .text("Posterior density");
 
     const trueLayer = root.append("g");
@@ -2058,7 +2091,7 @@
       const maxY = Math.min(2.5, d3.max(allPosts.flat(), d => d.y) || 1.0);
       yScale.domain([0, Math.max(0.6, maxY * 1.05)]);
       yAxisG.call(d3.axisLeft(yScale).ticks(5))
-        .call(g => g.selectAll("text").attr("font-size", 12))
+        .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT))
         .call(g => g.select(".domain").attr("d", `M0,${innerH}V0`));
 
       const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y)).curve(d3.curveBasis);
@@ -2137,21 +2170,25 @@
     const stripXAxisG = stripRoot.append("g")
       .attr("transform", `translate(0,${stripInnerH})`)
       .call(d3.axisBottom(stripX).ticks(6))
-      .call(g => g.selectAll("text").attr("font-size", 11));
+      .call(g => g.selectAll("text").attr("font-size", FIG_SMALL_AXIS_FONT));
     stripRoot.append("g")
       .call(d3.axisLeft(stripY).ticks(5))
-      .call(g => g.selectAll("text").attr("font-size", 11));
-    stripRoot.append("text")
-      .attr("transform", `translate(${stripInnerW/2},${stripInnerH + 32})`)
-      .attr("text-anchor", "middle").attr("font-size", 12)
-      .text("Most recent 200 Thompson draws");
-    appendKatexLabel(stripRoot, "\\textrm{Sampled }\\tilde{\\mu}_k", {
-      x: -44,
-      y: stripInnerH / 2,
-      width: 240,
-      height: 44,
-      rotate: -90,
-      fontSize: 20
+      .call(g => g.selectAll("text").attr("font-size", FIG_SMALL_AXIS_FONT));
+    const sampledLabel = stripRoot.append("g")
+      .attr("transform", `translate(-44,${stripInnerH / 2}) rotate(-90)`);
+    sampledLabel.append("text")
+      .attr("x", -52)
+      .attr("text-anchor", "start")
+      .attr("dominant-baseline", "middle")
+      .attr("font-size", FIG_AXIS_FONT)
+      .text("Sampled");
+    appendKatexLabel(sampledLabel, "\\tilde{\\mu}_k", {
+      x: 26,
+      y: 0,
+      width: 90,
+      height: 36,
+      anchor: "start",
+      fontSize: FIG_MATH_LABEL_FONT
     });
     const dotsLayer = stripRoot.append("g");
 
@@ -2195,7 +2232,7 @@
       const minIdx = Math.max(1, totalDraws - 199);
       stripX.domain([minIdx, Math.max(minIdx + 199, totalDraws)]);
       stripXAxisG.call(d3.axisBottom(stripX).ticks(6))
-        .selectAll("text").attr("font-size", 11);
+        .selectAll("text").attr("font-size", FIG_SMALL_AXIS_FONT);
 
       const drawGroups = dotsLayer.selectAll("g.mc-draw").data(draws, d => d.idx);
       drawGroups.exit().remove();
@@ -2330,19 +2367,19 @@
     root.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).tickFormat(d => `arm ${d + 1}`))
-      .call(g => g.selectAll("text").attr("font-size", 13));
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
     root.append("g")
       .call(d3.axisLeft(yScale).ticks(7))
-      .call(g => g.selectAll("text").attr("font-size", 12));
-    root.append("text")
-      .attr("transform", `translate(${innerW/2},${innerH + 36})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 13)
-      .text("Arm");
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT));
+    // root.append("text")
+    //   .attr("transform", `translate(${innerW/2},${innerH + 36})`)
+    //   .attr("text-anchor", "middle")
+    //   .attr("font-size", FIG_AXIS_FONT)
+    //   .text("Arm");
     root.append("text")
       .attr("transform", `translate(-44,${innerH/2}) rotate(-90)`)
       .attr("text-anchor", "middle")
-      .attr("font-size", 13)
+      .attr("font-size", FIG_AXIS_FONT)
       .text("Observed reward");
     root.append("line")
       .attr("x1", 0).attr("x2", innerW)
@@ -2473,7 +2510,7 @@
   })();
 
   /* ============================================================
-     Figure 5 — Parameter sweep (Sutton-Barto style)
+     Figure 6 — Parameter sweep (Sutton-Barto style)
      ============================================================ */
   (function paramSweepFigure() {
     const svg = d3.select("#param-sweep-svg");
@@ -2535,24 +2572,32 @@
     root.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(x).tickValues(xTicks).tickFormat(d => xLabels[d] || d))
-      .call(g => g.selectAll("text").attr("font-size", 12))
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT))
       .call(g => g.select(".domain").attr("stroke", "#888"));
     root.append("g")
       .call(d3.axisLeft(y).ticks(7).tickFormat(d3.format(".1f")))
-      .call(g => g.selectAll("text").attr("font-size", 12))
+      .call(g => g.selectAll("text").attr("font-size", FIG_TICK_FONT))
       .call(g => g.select(".domain").attr("stroke", "#888"));
 
-    appendKatexLabel(root, "\\text{Hyperparameter value (log scale)}\\;\\text{--}\\;\\varepsilon / \\alpha / Q_0 / c / \\beta_0", {
-      x: innerW / 2,
-      y: innerH + 46,
-      width: 820,
-      height: 48,
-      fontSize: 26,
+    root.append("text")
+      .attr("transform", `translate(${innerW/2 - 36},${innerH + 46})`)
+      .attr("text-anchor", "end")
+      .attr("dominant-baseline", "middle")
+      .attr("font-size", FIG_AXIS_FONT)
+      .attr("fill", "#444")
+      .text("Hyperparameter value (log scale) --");
+    appendKatexLabel(root, "\\varepsilon / \\alpha / Q_0 / c / \\beta_0", {
+      x: innerW / 2 - 26,
+      y: innerH + 45,
+      width: 360,
+      height: 38,
+      anchor: "start",
+      fontSize: FIG_MATH_LABEL_FONT,
       color: "#444"
     });
     root.append("text")
       .attr("transform", `translate(-50,${innerH/2}) rotate(-90)`)
-      .attr("text-anchor", "middle").attr("font-size", 13)
+      .attr("text-anchor", "middle").attr("font-size", FIG_AXIS_FONT)
       .attr("fill", "#444")
       .text("Average reward over first 1000 steps");
 
