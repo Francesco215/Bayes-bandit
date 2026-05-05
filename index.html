@@ -3,6 +3,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Bayes Bandit</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WF9KF950L6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-WF9KF950L6');
+  </script>
   <script src="https://distill.pub/template.v2.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
@@ -44,6 +53,18 @@
       text-wrap: pretty;
       font-size: 15px;
       line-height: 1.5;
+    }
+
+    d-byline .byline {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(13em, 1.35fr) !important;
+    }
+
+    d-byline a[href*="doi.org"],
+    d-byline .doi,
+    d-byline p:last-child {
+      white-space: nowrap;
+      overflow-wrap: normal;
+      word-break: normal;
     }
 
     .l-side {
@@ -619,6 +640,7 @@
     }
     d-appendix pre.citation-short {
       max-width: 100%;
+      padding-block: 1.2em;
     }
 
     details.math-details {
@@ -664,6 +686,7 @@
     {
       "title": "The Bayes Bandit",
       "published": "5 May 2026",
+      "doi": "10.5281/zenodo.20038430",
       "authors": [
         {
           "author": "Francesco Sacco",
@@ -680,8 +703,7 @@
 </d-front-matter>
 
 <d-title>
-  <h1>The Bayes Bandit</h1>
-  <p>*Pew Pew*</p>
+  <h1>What is Curiosity? Mathematically?</h1>
 </d-title>
 
 <d-byline>
@@ -706,7 +728,6 @@
   <p class="mobile-disclaimer">
     <strong>Mobile note:</strong> this post is meant to be read on a computer. Several figures are interactive and use wide layouts, hover states, sliders, and precise clicks, so they may not work as intended on a phone or small tablet.
   </p>
-  <blockquote><b>What is Curiosity? Mathematically?</b></blockquote>
   <p>
     This is one of the most important questions of the entire field of Artificial Intelligence.<br>
     The whole field of dataset curation will go away once a good mathematical framework of curiosity emerges.
@@ -1316,16 +1337,15 @@
 
   <h3>Citation</h3>
   <p>For attribution in academic contexts, please cite this work as</p>
-  <pre class="citation-short">Sacco, "The Bayes Bandit", 2025</pre>
+  <pre class="citation-short">Sacco, "What is Curiosity? Mathematically?", 2026. doi: 10.5281/zenodo.20038430</pre>
   <p>BibTeX:</p>
-  <pre class="citation-short">
-      @article{sacco2026bayesbandit,
+  <pre class="citation-short">@article{sacco2026Curiosity,
       author = {Sacco, Francesco},
       title  = {The Bayes Bandit},
       year   = {2026},
-      url    = {https://github.com/Francesco215/Bayes-bandit}
-      }
-  </pre>
+      doi    = {10.5281/zenodo.20038430},
+      url    = {https://francesco215.github.io/Bayes-bandit/}
+    }</pre>
 
   <d-bibliography>
     <script type="text/bibtex">
