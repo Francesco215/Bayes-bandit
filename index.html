@@ -1417,6 +1417,32 @@
       }
     </script>
   </d-bibliography>
+  <div id="comments">
+    <script src="https://giscus.app/client.js"
+            data-repo="Francesco215/Bayes-bandit"
+            data-repo-id="R_kgDOSLxfDg"
+            data-category="Comments"
+            data-category-id="DIC_kwDOSLxfDs4C8YnH"
+            data-mapping="pathname"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="bottom"
+            data-theme="light"
+            data-lang="en"
+            crossorigin="anonymous"
+            async>
+    </script>
+  </div>
+  <script>
+    window.addEventListener("load", function() {
+      const appendix = document.querySelector("d-appendix");
+      const comments = document.getElementById("comments");
+      if (appendix && comments) {
+        appendix.appendChild(comments);
+      }
+    });
+  </script>
 </d-appendix>
 
 <script>

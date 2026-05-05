@@ -1,10 +1,13 @@
 # Gaussian K-Armed Bandit Study
 > [!NOTE]
-> This is a week-end project where I tried heavly leaning into AI for math generation.
+> Check out the full blog post! [link](https://francesco215.github.io/Bayes-bandit/)
 
-Here I tried to "solve" the k-armed bandit problem in a fully Bayesian way. I gave the idea, pointed at the problem, gave some directions, checked the math. But the equation where entirely AI-written. Then asked the model to run experiments.
+Here I tried to "solve" the k-armed bandit problem in a fully Bayesian way. I gave the idea, pointed at the problem, gave some directions, checked the math. But the equation where AI-written. Then asked the model to run experiments.
 
 The whole ideation + development phases ended up lasting an evening and archieved some really competitive results!
+
+The week-end after I made the blog post. I did the first draft with claude design and did all the interactive figures with coding agents.
+When it comes to text generation, I had to do most of it by hand and use AI to correct mistakes or give me tips.
 
 ## Problem Setup
 
