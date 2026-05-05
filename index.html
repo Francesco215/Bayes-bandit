@@ -82,6 +82,19 @@
       background: transparent;
       padding: 18px 20px 16px;
     }
+    .mobile-disclaimer {
+      display: none;
+      margin: 0 0 1.4em;
+      padding: 12px 14px;
+      border-left: 4px solid var(--bb-orange);
+      background: rgba(255, 140, 0, 0.08);
+      color: var(--bb-ink);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .mobile-disclaimer strong {
+      font-weight: 700;
+    }
 
     .bb-card h3 {
       margin: 0 0 4px;
@@ -125,6 +138,9 @@
     }
     @media (max-width: 760px) {
       .mc-bottom-row { grid-template-columns: 1fr; }
+      .mobile-disclaimer {
+        display: block;
+      }
     }
 
     /* Controls in the right gutter, matching reference */
@@ -234,7 +250,7 @@
       border-radius: 4px;
       box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.22);
       pointer-events: none;
-      animation: armPullCallout 2.4s ease-out both;
+      animation: armPullCallout 1.6s ease-in-out infinite;
     }
     @keyframes armPullCallout {
       0% {
@@ -563,6 +579,30 @@
       font-style: italic;
     }
 
+    d-article pre,
+    d-appendix pre {
+      box-sizing: border-box;
+      display: block;
+      margin: 1.8em 0;
+      padding: 1.8em 2.2em;
+      overflow-x: auto;
+      border: 1px solid #e3e3e3;
+      border-radius: 4px;
+      background: #fafafa;
+      color: #888;
+      font-family: Menlo, Consolas, Monaco, "Courier New", monospace;
+    }
+    d-article pre code,
+    d-appendix pre code {
+      color: inherit;
+      background: transparent;
+      padding: 0;
+      border: 0;
+    }
+    d-appendix pre.citation-short {
+      max-width: 100%;
+    }
+
     details.math-details {
       border-left: 3px solid var(--bb-line);
       margin: 1.4em 0 1.8em;
@@ -645,6 +685,9 @@
 </d-byline>
 
 <d-article>
+  <p class="mobile-disclaimer">
+    <strong>Mobile note:</strong> this post is meant to be read on a computer. Several figures are interactive and use wide layouts, hover states, sliders, and precise clicks, so they may not work as intended on a phone or small tablet.
+  </p>
   <blockquote><b>What is Curiosity? Mathematically?</b></blockquote>
   <p>
     This is one of the most important questions of the entire field of Artificial Intelligence.<br>
@@ -892,7 +935,7 @@
         The recipe is the same one Thompson wrote down in 1933 (algorithm 1) <d-cite key="thompson1933"></d-cite>:
       </p>
       <p>
-        On its own this is just a one-step decision rule. If wr put it inside the bandit loop, where every pull adds
+        On its own this is just a one-step decision rule. If we put it inside the bandit loop, where every pull adds
         one more observation to $D$, and it becomes an adaptive algorithm: uncertainty drives exploration early on,
         then the posterior concentrates and the policy naturally settles on the arms that keep looking best (algorithm 2).
       </p>
@@ -1250,38 +1293,70 @@
   <d-bibliography>
     <script type="text/bibtex">
       @article{thompson1933,
-        title   = {On the likelihood that one unknown probability exceeds another in view of the evidence of two samples},
-        author  = {Thompson, William R.},
-        journal = {Biometrika},
-        volume  = {25},
-        number  = {3-4},
-        pages   = {285--294},
-        year    = {1933}
+        title     = {On the likelihood that one unknown probability exceeds another in view of the evidence of two samples},
+        author    = {Thompson, William R.},
+        journal   = {Biometrika},
+        volume    = {25},
+        number    = {3/4},
+        pages     = {285--294},
+        year      = {1933},
+        publisher = {Oxford University Press},
+        doi       = {10.1093/biomet/25.3-4.285},
+        url       = {https://doi.org/10.1093/biomet/25.3-4.285}
       }
+
       @article{russo2018tutorial,
-        title   = {A tutorial on {Thompson} sampling},
-        author  = {Russo, Daniel J. and Van Roy, Benjamin and Kazerouni, Abbas and Osband, Ian and Wen, Zheng},
-        journal = {Foundations and Trends in Machine Learning},
-        year    = {2018}
+        title     = {A tutorial on {Thompson} sampling},
+        author    = {Russo, Daniel J. and Van Roy, Benjamin and Kazerouni, Abbas and Osband, Ian and Wen, Zheng},
+        journal   = {Foundations and Trends in Machine Learning},
+        volume    = {11},
+        number    = {1},
+        pages     = {1--96},
+        year      = {2018},
+        publisher = {Now Publishers},
+        doi       = {10.1561/2200000070},
+        url       = {https://doi.org/10.1561/2200000070}
       }
+
       @inproceedings{russo2016bestarm,
         title     = {Simple {Bayesian} algorithms for best arm identification},
         author    = {Russo, Daniel},
-        booktitle = {Conference on Learning Theory (COLT)},
-        year      = {2016}
+        booktitle = {Proceedings of the 29th Annual Conference on Learning Theory},
+        series    = {Proceedings of Machine Learning Research},
+        volume    = {49},
+        pages     = {1417--1418},
+        year      = {2016},
+        editor    = {Feldman, Vitaly and Rakhlin, Alexander and Shamir, Ohad},
+        address   = {Columbia University, New York, New York, USA},
+        month     = {23--26 Jun},
+        publisher = {PMLR},
+        url       = {https://proceedings.mlr.press/v49/russo16.html}
       }
+
       @inproceedings{guha2014thompson,
         title     = {Stochastic regret minimization via {Thompson} sampling},
         author    = {Guha, Sudipto and Munagala, Kamesh},
-        booktitle = {Conference on Learning Theory (COLT)},
-        year      = {2014}
+        booktitle = {Proceedings of the 27th Conference on Learning Theory},
+        series    = {Proceedings of Machine Learning Research},
+        volume    = {35},
+        pages     = {317--338},
+        year      = {2014},
+        editor    = {Balcan, Maria Florina and Feldman, Vitaly and Szepesv{\'a}ri, Csaba},
+        address   = {Barcelona, Spain},
+        month     = {13--15 Jun},
+        publisher = {PMLR},
+        url       = {https://proceedings.mlr.press/v35/guha14.html}
       }
+
       @book{suttonbarto,
         title     = {Reinforcement Learning: An Introduction},
         author    = {Sutton, Richard S. and Barto, Andrew G.},
+        edition   = {2},
+        year      = {2018},
         publisher = {MIT Press},
-        edition   = {2nd},
-        year      = {2018}
+        address   = {Cambridge, MA},
+        isbn      = {9780262039246},
+        url       = {http://incompleteideas.net/book/the-book-2nd.html}
       }
     </script>
   </d-bibliography>
@@ -1530,46 +1605,56 @@
     sharedState.listeners.forEach(fn => fn());
   }
 
-  function showArmPullCalloutAtViewportMiddle(el) {
+  function showArmPullCalloutWhileVisible(el) {
     if (!el) return;
 
-    let hasTriggered = false;
+    let hasPulledArm = false;
     let ticking = false;
+    let observer = null;
 
     function cleanup() {
       window.removeEventListener("scroll", scheduleCheck);
       window.removeEventListener("resize", scheduleCheck);
+      el.removeEventListener("click", disableCallout);
+      if (observer) observer.disconnect();
     }
 
-    function trigger() {
-      hasTriggered = true;
+    function disableCallout(event) {
+      if (!event.target.closest("button")) return;
+      hasPulledArm = true;
       cleanup();
-      el.classList.add("arm-pulls-callout");
-      window.setTimeout(() => {
-        el.classList.remove("arm-pulls-callout");
-      }, 2500);
+      el.classList.remove("arm-pulls-callout");
     }
 
-    function checkPosition() {
+    function setVisible(isVisible) {
+      el.classList.toggle("arm-pulls-callout", isVisible && !hasPulledArm);
+    }
+
+    function checkVisibility() {
       ticking = false;
-      if (hasTriggered) return;
+      if (hasPulledArm) return;
 
       const rect = el.getBoundingClientRect();
-      const viewportMiddle = window.innerHeight / 2;
-      if (rect.top <= viewportMiddle && rect.bottom >= viewportMiddle) {
-        trigger();
-      }
+      setVisible(rect.bottom > 0 && rect.top < window.innerHeight);
     }
 
     function scheduleCheck() {
-      if (ticking || hasTriggered) return;
+      if (ticking || hasPulledArm) return;
       ticking = true;
-      window.requestAnimationFrame(checkPosition);
+      window.requestAnimationFrame(checkVisibility);
     }
 
-    window.addEventListener("scroll", scheduleCheck, { passive: true });
-    window.addEventListener("resize", scheduleCheck);
-    scheduleCheck();
+    el.addEventListener("click", disableCallout);
+    if ("IntersectionObserver" in window) {
+      observer = new IntersectionObserver(entries => {
+        if (!hasPulledArm) setVisible(entries[0].isIntersecting);
+      });
+      observer.observe(el);
+    } else {
+      window.addEventListener("scroll", scheduleCheck, { passive: true });
+      window.addEventListener("resize", scheduleCheck);
+      scheduleCheck();
+    }
   }
 
   /* ============================================================
@@ -1632,7 +1717,7 @@
       btn.addEventListener("click", () => pullArmFromPosteriorDemo(k));
       pullsBox.appendChild(btn);
     }
-    showArmPullCalloutAtViewportMiddle(pullsBox);
+    showArmPullCalloutWhileVisible(pullsBox);
 
     function bucketize(samples) {
       const counts = Array(bucketCount).fill(0);
