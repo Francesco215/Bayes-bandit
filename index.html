@@ -135,13 +135,22 @@
     .mc-controls-aside {
       align-self: stretch;
       box-shadow: none;
-      border: 1px solid #e1e4e8;
-      background: #fafbfc;
-      padding: 14px 16px;
-      border-radius: 10px;
+      border: 0;
+      border-left: 1px solid #d8dee4;
+      background: transparent;
+      padding: 6px 0 6px 18px;
+      border-radius: 0;
+    }
+    .mc-speed-control {
+      margin-top: 14px;
     }
     @media (max-width: 760px) {
       .mc-bottom-row { grid-template-columns: 1fr; }
+      .mc-controls-aside {
+        border-left: 0;
+        border-top: 1px solid #d8dee4;
+        padding: 14px 0 0;
+      }
       .mobile-disclaimer {
         display: block;
       }
@@ -740,11 +749,6 @@
         <button id="evidence-pull10" type="button">Random pull &times;10</button>
         <button id="evidence-reset" type="button">Reset</button>
       </div>
-      <p class="stat-line" id="evidence-stats"></p>
-      <p class="stat-line" id="evidence-stats-extra"></p>
-      <hr class="divider">
-      <h4>Observed rewards</h4>
-      <p class="stat-line" id="evidence-per-arm"></p>
     </aside>
   </div>
 
@@ -792,10 +796,6 @@
       <div class="actions">
         <button id="arms-resample" class="primary" type="button">Re-roll the arms</button>
       </div>
-      <p class="stat-line" id="arms-stats"></p>
-      <p class="stat-line" style="color:var(--bb-ink-soft); font-size:12px;">
-        Re-rolling resets all pulls in Figures&nbsp;1 and&nbsp;3 — the four interactive figures share one world.
-      </p>
     </aside>
   </div>
 
@@ -888,7 +888,6 @@
         <button id="post-pull10" type="button">Random pull &times;10</button>
         <button id="post-reset" type="button">Reset</button>
       </div>
-      <p class="stat-line" id="post-stats"></p>
       <hr class="divider">
       <h4>Prior hyperparameters</h4>
       <div class="control-row">
@@ -981,13 +980,11 @@
             <button id="mc-step" type="button">+ 50 draws</button>
             <button id="mc-reset" type="button">Reset draws</button>
           </div>
-          <p class="stat-line" id="mc-stats"></p>
-          <hr class="divider">
-          <h4>Pulls so far <span style="font-weight:400;color:var(--bb-ink-soft)">(carries over from Figure 3)</span></h4>
-          <p class="stat-line" id="mc-pulls"></p>
-          <p class="stat-line" style="color:var(--bb-ink-soft); font-size:12px;">
-            Pull more arms in Figure&nbsp;3 to feed this estimator more data &mdash; the posteriors are shared.
-          </p>
+          <div class="control-row mc-speed-control">
+            <label for="mc-speed">Speed:</label>
+            <input id="mc-speed" type="range" min="1" max="10" step="1" value="5">
+            <span id="mc-speed-val" class="value-chip">5</span>
+          </div>
         </aside>
       </div>
     </div>
@@ -1799,26 +1796,34 @@
         if (el) el.textContent = `${sharedState.pulls[k].n}`;
       }
 
-      const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
-      const totalReward = sharedState.pulls.reduce((acc, p) => acc + p.s, 0);
-      const avgReward = totalN > 0 ? totalReward / totalN : 0;
-      const empiricalBest = sharedState.pulls.reduce((best, p, i) => {
-        if (p.n === 0) return best;
-        if (best === null) return i;
-        return p.s / p.n > sharedState.pulls[best].s / sharedState.pulls[best].n ? i : best;
-      }, null);
-      const lastText = sharedState.lastPull
-        ? `Last: arm ${sharedState.lastPull.arm + 1}, reward ${sharedState.lastPull.reward.toFixed(2)}`
-        : "Last: none";
-      statsEl.textContent = totalN > 0
-        ? `Pulls: ${totalN} · Total reward: ${totalReward.toFixed(2)} · Mean reward: ${avgReward.toFixed(2)}`
-        : "No pulls yet.";
-      extraEl.textContent = empiricalBest !== null
-        ? `${lastText} · Empirical best: arm ${empiricalBest + 1}`
-        : lastText;
-      perArmEl.textContent = sharedState.pulls
-        .map((p, i) => p.n > 0 ? `arm${i + 1}: n=${p.n}, mean=${(p.s / p.n).toFixed(2)}` : `arm${i + 1}: n=0`)
-        .join(" · ");
+      if (statsEl || extraEl || perArmEl) {
+        const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
+        const totalReward = sharedState.pulls.reduce((acc, p) => acc + p.s, 0);
+        const avgReward = totalN > 0 ? totalReward / totalN : 0;
+        const empiricalBest = sharedState.pulls.reduce((best, p, i) => {
+          if (p.n === 0) return best;
+          if (best === null) return i;
+          return p.s / p.n > sharedState.pulls[best].s / sharedState.pulls[best].n ? i : best;
+        }, null);
+        const lastText = sharedState.lastPull
+          ? `Last: arm ${sharedState.lastPull.arm + 1}, reward ${sharedState.lastPull.reward.toFixed(2)}`
+          : "Last: none";
+        if (statsEl) {
+          statsEl.textContent = totalN > 0
+            ? `Pulls: ${totalN} · Total reward: ${totalReward.toFixed(2)} · Mean reward: ${avgReward.toFixed(2)}`
+            : "No pulls yet.";
+        }
+        if (extraEl) {
+          extraEl.textContent = empiricalBest !== null
+            ? `${lastText} · Empirical best: arm ${empiricalBest + 1}`
+            : lastText;
+        }
+        if (perArmEl) {
+          perArmEl.textContent = sharedState.pulls
+            .map((p, i) => p.n > 0 ? `arm${i + 1}: n=${p.n}, mean=${(p.s / p.n).toFixed(2)}` : `arm${i + 1}: n=0`)
+            .join(" · ");
+        }
+      }
     }
 
     sharedState.listeners.push(draw);
@@ -1875,17 +1880,18 @@
       .attr("stroke", "#999")
       .attr("stroke-dasharray", "4 4");
 
-    const violinLayer = root.append("g");
+    const violinLayer = root.append("g").attr("class", "arms-violin-layer");
+    const annotationLayer = root.append("g").attr("class", "arms-annotation-layer");
 
     function drawViolins() {
       const arms = sharedState.arms;
-      const groups = violinLayer.selectAll("g.violin").data(arms);
-      groups.exit().remove();
-      const enter = groups.enter().append("g").attr("class", "violin");
-      const merged = enter.merge(groups)
+      const violinGroups = violinLayer.selectAll("g.violin").data(arms);
+      violinGroups.exit().remove();
+      const violinEnter = violinGroups.enter().append("g").attr("class", "violin");
+      const mergedViolins = violinEnter.merge(violinGroups)
         .attr("transform", (_, i) => `translate(${xScale(i)},0)`);
 
-      merged.each(function (arm, i) {
+      mergedViolins.each(function (arm, i) {
         const g = d3.select(this);
         g.selectAll("*").remove();
         const bw = xScale.bandwidth();
@@ -1909,6 +1915,20 @@
           .attr("opacity", 0.85)
           .attr("stroke", ARM_COLORS[i])
           .attr("stroke-opacity", 0.7);
+      });
+
+      const annotationGroups = annotationLayer.selectAll("g.annotation").data(arms);
+      annotationGroups.exit().remove();
+      const annotationEnter = annotationGroups.enter().append("g").attr("class", "annotation");
+      const mergedAnnotations = annotationEnter.merge(annotationGroups)
+        .attr("transform", (_, i) => `translate(${xScale(i)},0)`);
+
+      mergedAnnotations.each(function (arm, i) {
+        const g = d3.select(this);
+        g.selectAll("*").remove();
+        const bw = xScale.bandwidth();
+        const bx = bw / 2;
+        const halfWidth = bw / 2;
 
         g.append("line")
           .attr("x1", bx - halfWidth * 0.55)
@@ -2067,9 +2087,11 @@
         if (el) el.textContent = `${sharedState.pulls[k].n}`;
       }
 
-      const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
-      const best = sharedState.arms.reduce((b, a, i) => (a.mu > sharedState.arms[b].mu ? i : b), 0);
-      statsEl.textContent = `Total pulls: ${totalN} · True best: arm ${best + 1} (μ = ${sharedState.arms[best].mu.toFixed(2)})`;
+      if (statsEl) {
+        const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
+        const best = sharedState.arms.reduce((b, a, i) => (a.mu > sharedState.arms[b].mu ? i : b), 0);
+        statsEl.textContent = `Total pulls: ${totalN} · True best: arm ${best + 1} (μ = ${sharedState.arms[best].mu.toFixed(2)})`;
+      }
     }
 
     // Listeners
@@ -2143,6 +2165,13 @@
 
     const statsEl = document.getElementById("mc-stats");
     const pullsEl = document.getElementById("mc-pulls");
+    const speedEl = document.getElementById("mc-speed");
+    const speedValEl = document.getElementById("mc-speed-val");
+
+    function streamDelay() {
+      const speed = speedEl ? parseInt(speedEl.value, 10) : 5;
+      return 650 - speed * 60;
+    }
 
     function recordDrawEvent(event) {
       wins[event.winner] += 1;
@@ -2195,14 +2224,17 @@
 
 
 
-      // text
-      statsEl.textContent = totalDraws > 0
-        ? `Total draws: ${totalDraws}`
-        : "No draws yet — click below to start sampling.";
+      if (statsEl) {
+        statsEl.textContent = totalDraws > 0
+          ? `Total draws: ${totalDraws}`
+          : "No draws yet — click below to start sampling.";
+      }
 
-      const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
-      const perArm = sharedState.pulls.map((p, i) => `arm${i+1}=${p.n}`).join(" · ");
-      pullsEl.textContent = `Total: ${totalN} · ${perArm}`;
+      if (pullsEl) {
+        const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
+        const perArm = sharedState.pulls.map((p, i) => `arm${i+1}=${p.n}`).join(" · ");
+        pullsEl.textContent = `Total: ${totalN} · ${perArm}`;
+      }
     }
 
     function stopStream() {
@@ -2213,17 +2245,30 @@
       }
     }
 
+    function startStream() {
+      timer = setInterval(() => {
+        doDraw();
+        draw();
+      }, streamDelay());
+      document.getElementById("mc-toggle").textContent = "Pause stream";
+    }
+
     document.getElementById("mc-toggle").addEventListener("click", function () {
       if (timer === null) {
-        timer = setInterval(() => {
-          doDraw();
-          draw();
-        }, 200);
-        this.textContent = "Pause stream";
+        startStream();
       } else {
         stopStream();
       }
     });
+    if (speedEl) {
+      speedEl.addEventListener("input", () => {
+        if (speedValEl) speedValEl.textContent = speedEl.value;
+        if (timer !== null) {
+          clearInterval(timer);
+          startStream();
+        }
+      });
+    }
     document.getElementById("mc-step").addEventListener("click", () => {
       for (let i = 0; i < 50; i++) doDraw();
       draw();
