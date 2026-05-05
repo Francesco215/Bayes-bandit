@@ -945,7 +945,7 @@
     We can translate that question into the posteriors we just built. For each arm $k$, ask how likely
     it is that its true average reward is larger than every other arm's estimated average reward:
     $$
-    \mathbb P(k^\star = k\mid D) \;=\; \mathbb P\!\big(\mu_k\ge \mu_j\;\forall j\ne k\,\big|\,D\big).
+    \mathbb P(k^\star = k\mid D) \;=\; \mathbb P\big(\mu_k\ge \mu_j\;\forall j\ne k\,\big|\,D\big).
     $$
     </p>
   <div class="algo-split">
@@ -1265,7 +1265,7 @@
     UCB wins by $0.0118$, which is $\sim 0.76\%$ better than the Bayesian method.<br>
     The fact that the result is so similar is not that surprising, given that the UCB policy looks Bayesian-ish.
     $$
-    A_t \;=\; \arg\max_k\!\left[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\right].
+    A_t \;=\; \arg\max_k\!\bigg[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\bigg].
     $$
     Both methods are trying to spend samples where uncertainty could still matter. UCB does this
     explicitly, by adding an uncertainty bonus to the empirical mean. The Bayesian method does it
