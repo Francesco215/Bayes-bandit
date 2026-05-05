@@ -34,6 +34,10 @@
       --bb-ink: #121212;
       --bb-ink-soft: #4a4f55;
       --bb-bg-card: transparent;
+      --arm-1: #7aa6ff;
+      /*--arm-3: #d63b76;*/
+      --arm-3: #f07a26;
+      --arm-5: rgba(255, 140, 0, 0.7);
     }
 
     figcaption {
@@ -537,10 +541,12 @@
       font-size: 13px;
       color: #4c4f69;
     }
-    .algo-block .algo-keyword { color: #8839ef; font-weight: 600; }
-    .algo-block .algo-fn { color: #1e66f5; }
+    .algo-block .algo-keyword { color: var(--arm-3); font-weight: 600; }
+    .algo-block .algo-action { color: var(--arm-5); font-weight: 600; }
+    .algo-block .algo-fn { color: var(--arm-1); font-weight: 600; }
     .algo-block .algo-var { color: #d20f39; }
     .algo-block .algo-op { color: #179299; }
+    .algo-block .algo-base { color: #4c4f69; }
     .algo-block .algo-atom { color: #fe640b; }
     .algo-block .algo-math { color: #209fb5; }
     .algo-block .indent-1 { padding-left: 1.5em; }
@@ -944,7 +950,7 @@
       <div class="algo-block">
         <p class="algo-line"><span class="algo-keyword">def</span> <span class="algo-fn">thompson_sampling</span>(<span class="algo-var">$D$</span>):</p>
         <p class="algo-line indent-1"><span class="algo-keyword">for</span> each arm <span class="algo-var">$k$</span>:</p>
-        <p class="algo-line indent-2"><span class="algo-keyword">draw</span> <span class="algo-math">$\tilde\mu_k \sim p(\mu_k\mid D_k)$</span></p>
+        <p class="algo-line indent-2"><span class="algo-action">draw</span> <span class="algo-math">$\tilde\mu_k \sim p(\mu_k\mid D_k)$</span></p>
         <p class="algo-line indent-1"><span class="algo-keyword">return</span> <span class="algo-math">$\arg\max_k \tilde\mu_k$</span></p>
         <p class="algo-note">Algorithm 1</p>
       </div>
@@ -952,8 +958,8 @@
         <p class="algo-line"><span class="algo-keyword">def</span> <span class="algo-fn">bayes_bandit</span>(<span class="algo-var">$D$</span>):</p>
         <p class="algo-line indent-1"><span class="algo-keyword">for</span> <span class="algo-var">$t$</span> <span class="algo-op">=</span> <span class="algo-atom">$1, 2, \ldots$</span>:</p>
         <p class="algo-line indent-2"><span class="algo-var">$a_t$</span> <span class="algo-op">=</span> <span class="algo-fn">thompson_sampling</span>(<span class="algo-var">$D$</span>)</p>
-        <p class="algo-line indent-2"><span class="algo-keyword">pull</span> arm <span class="algo-var">$a_t$</span> <span class="algo-op">&amp;</span> observe reward <span class="algo-var">$r_t$</span></p>
-        <p class="algo-line indent-2"><span class="algo-keyword">append</span> <span class="algo-math">$(a_t, r_t)$</span> to <span class="algo-var">$D$</span></p>
+        <p class="algo-line indent-2"><span class="algo-action">pull</span> arm <span class="algo-var">$a_t$</span> <span class="algo-base">&amp;</span> observe reward <span class="algo-var">$r_t$</span></p>
+        <p class="algo-line indent-2"><span class="algo-action">append</span> <span class="algo-math">$(a_t, r_t)$</span> to <span class="algo-var">$D$</span></p>
         <p class="algo-line indent-1"><span class="algo-keyword">return</span> <span class="algo-var">$p(\mu_k \mid D)$</span></p>
         <p class="algo-note">Algorithm 2</p>
       </div>
