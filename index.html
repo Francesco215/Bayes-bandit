@@ -663,11 +663,11 @@
   <script type="text/json">
     {
       "title": "The Bayes Bandit",
-      "published": "2025",
+      "published": "5 May 2026",
       "authors": [
         {
           "author": "Francesco Sacco",
-          "authorURL": "https://github.com/Francesco215",
+          "authorURL": "https://francesco215.github.io/",
           "affiliations": [
             {
               "name": "None"
@@ -716,18 +716,18 @@
   </p>
   <ul>
     <li>This one explores one of the most fundamental problems in Reinforcement Learning: the $K$-armed bandit problem.</li>
-    <li>The next one (already in progess) will be a full blown chess-engine.</li>
+    <li>The next one (already in progress) will be a full-blown chess engine.</li>
     <li>If everything goes well, there will be a third one, but let's not get ahead of ourselves!</li>
   </ul>
-  <h2>What is The $K$-armed bandit problem?</h2>
+  <h2>What is the $K$-armed bandit problem?</h2>
   <p>
-      The $K$-armed bandit problem is perhaps one of the worse named pieces of math, However it has important applications
+      The $K$-armed bandit problem is perhaps one of the worst-named pieces of math. However, it has important applications
       in reinforcement learning. Let's see how it works.
   </p>
   <p>
     You walk into a room with $K$ slot machines. Each one pays out a noisy reward drawn from its own
     Gaussian distribution &mdash; you don't know the means, you don't know the variances, and you have a
-    finite number of pulls. Your job is to earn as much money (aka. "reward") as possible.
+    finite number of pulls. Your job is to earn as much money (a.k.a. "reward") as possible.
   </p>
 
   <figure>
@@ -756,7 +756,7 @@
   </div>
 
   <p>
-  Every pull is a tradeoff:
+  Every pull is a trade-off:
     <ul>
     <li><em><b>exploit</b></em> the arm that has looked best so far, at the cost of not exploring other potentially better arms</li>
     <li><em><b>explore</b></em> an arm whose true quality you're still uncertain about, at the cost of exploiting the best-known arm</li>
@@ -766,7 +766,7 @@
       So, how much should we exploit and how much should we explore?
   </p>
   <p>
-      We will see, that the answer to this existential question follows easly from the math once we ask ourselfes the question:
+      We will see that the answer to this existential question follows easily from the math once we ask ourselves the question:
   </p>
   <blockquote>
       Given the information available, what is the best action I can take?
@@ -804,8 +804,8 @@
 
   <h2>Reverse-engineering the arms</h2>
   <p>
-    We do not know directly the true mean and standard deviation of each arm, but after pulling an arm we can collect a dataset.
-    $D_k = \{r_{k,1},\dots,r_{k,n}\}$ of observed rewards. The bigger the dataset, the better our estimate of the true mean and std— But how do we do this quantitatively?<br>
+    We do not directly know the true mean and standard deviation of each arm, but after pulling an arm we can collect a dataset:
+    $D_k = \{r_{k,1},\dots,r_{k,n}\}$ of observed rewards. The bigger the dataset, the better our estimate of the true mean and standard deviation. But how do we do this quantitatively?<br>
 
 
     Just as the Gaussian model gives us the likelihood
@@ -824,7 +824,7 @@
     about one arm's expected reward, not just the next noisy reward from that arm.
   </p>
   <p>
-    Each time you pull an arm the available information at your disposal increases. You can then use that information to improve your estimate of the ground truth mean.
+    Each time you pull an arm, the available information increases. You can then use that information to improve your estimate of the ground truth mean.
   </p>
 
   <details class="math-details">
@@ -879,7 +879,7 @@
     </div>
     <figcaption>
     Figure 3: The vertical lines marked with $\mu^\star$ represent the true average reward of each arm.<br>
-      As you sample each arm, the predicted distribution $p(\mu | D)$ hones in onto the true average reward $\mu^\star$
+      As you sample each arm, the predicted distribution $p(\mu | D)$ homes in on the true average reward $\mu^\star$.
     </figcaption>
   </figure>
   <div id="post-controls" class="bb-controls l-gutter">
@@ -943,8 +943,8 @@
         The recipe is the same one Thompson wrote down in 1933 (algorithm 1) <d-cite key="thompson1933"></d-cite>:
       </p>
       <p>
-        On its own this is just a one-step decision rule. If we put it inside the bandit loop, where every pull adds
-        one more observation to $D$, and it becomes an adaptive algorithm: uncertainty drives exploration early on,
+        On its own, this is just a one-step decision rule. If we put it inside the bandit loop, where every pull adds
+        one more observation to $D$, it becomes an adaptive algorithm: uncertainty drives exploration early on,
         then the posterior concentrates and the policy naturally settles on the arms that keep looking best (algorithm 2).
       </p>
     </div>
@@ -998,11 +998,11 @@
   </figure>
 
   <p>
-      As you can see this algo works pretty well and it's oddly satifying to watch!
+      As you can see, this algorithm works pretty well, and it's oddly satisfying to watch!
   </p>
   <h2>What this teaches us about curiosity</h2>
   <p>
-      One odd thing jumps out when looking at this algorithm going: <i>sometimes it samples points where the expected mean is lower</i>. Why?
+      One odd thing jumps out when watching this algorithm run: <i>sometimes it samples points where the expected mean is lower</i>. Why?
   </p>
   <div class="uncertainty-side-row">
     <figure class="l-side uncertainty-figure">
@@ -1030,7 +1030,7 @@
 
     <div class="uncertainty-copy">
       <p>
-        Because the algorithm is not comparing only the means. It is comparing uncertain beliefs.
+        Because the algorithm is not comparing only the means; it is comparing uncertain beliefs.
       </p>
       <p>
         The arm we have pulled many times has a narrow posterior: we have a pretty good idea of how good it is. An arm we have barely tried has a wider posterior: its average might be lower, but there is still a real chance that it is better than it currently looks.
@@ -1150,7 +1150,7 @@
     })();
   </script>
   <p>
-      Ok, we are basically done, now let's compare it with other methods.
+      OK, we are basically done. Now let's compare it with other methods.
   </p>
   <h2>Comparison with known methods</h2>
 
@@ -1159,8 +1159,8 @@
     - Not a reviewer
   </blockquote>
   <p>
-    To benchmark this method I replicated the 10-armed testbed parameter study with the methods used in Chapter&nbsp;2 of Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.<br><br>
-    Each of the algorithms has a hyperparameter that balances exploration vs. exploitation. To cut things short I'm going to give you a brief overview of each methods in the cards below.
+    To benchmark this method, I replicated the 10-armed testbed parameter study with the methods used in Chapter&nbsp;2 of Sutton &amp; Barto<d-cite key="suttonbarto"></d-cite>.<br><br>
+    Each algorithm has a hyperparameter that balances exploration and exploitation. To keep things short, I'm going to give you a brief overview of each method in the cards below.
   </p>
   <div class="algo-grid l-page-outset">
     <div class="algo-card" style="--algo-color:#3764e6;">
@@ -1241,8 +1241,8 @@
   </div>
 
   <p>
-    UCB wins by $0.0118$ which is $\sim 0.76\%$ better than the bayesian method.<br>
-    The fact that the result is so similar is not that surprising given that the UCB policy looks bayesian-ish.
+    UCB wins by $0.0118$, which is $\sim 0.76\%$ better than the Bayesian method.<br>
+    The fact that the result is so similar is not that surprising, given that the UCB policy looks Bayesian-ish.
     $$
     A_t \;=\; \arg\max_k\!\left[\hat\mu_k + c\sqrt{\tfrac{\log t}{N_k(t)}}\right].
     $$
@@ -1275,16 +1275,16 @@
 
   <h2>Conclusion</h2>
   <p>
-      In this blog post we discovered that curiosity, is not a bonus term, a mood, or a hand-written urge to try random things:
+      In this blog post, we discovered that curiosity is not a bonus term, a mood, or a hand-written urge to try random things:
   </p>
   <blockquote>
        <b>Curiosity is what optimal action looks like when your beliefs are uncertain</b>
   </blockquote>
   <p>
-      The agent is not exploring because we told it to explore. It explores because uncertainty changes what “best action” means.
+      The agent is not exploring because we told it to explore. It explores because uncertainty changes what the “best action” means.
   </p>
   <p>
-      In this blog we've explored it in the context of the $K$-armed bandit problem. I believe this concept extends beyond this setting.<br>
+      In this blog post, we've explored this idea in the context of the $K$-armed bandit problem. I believe this concept extends beyond this setting.<br>
       The next environment I am working on is a chess engine built around the same idea.
   </p>
   <p>
@@ -1304,9 +1304,9 @@
     I want to thank <a href="https://the-puzzler.github.io/">Matteo Peluso</a> for the feedback.
   </p>
   <p>
-      This blog post is a writeup that I did after doing a weekend project.
+      This blog post is a write-up I wrote after doing a weekend project.
       You can find the code for all experiments and insights into my development process
-      in the relative <a href="https://github.com/Francesco215/Bayes-bandit">github repository</a>
+      in the corresponding <a href="https://github.com/Francesco215/Bayes-bandit">GitHub repository</a>.
   </p>
 
   <h3>Contact</h3>
