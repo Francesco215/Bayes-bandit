@@ -146,6 +146,9 @@
       height: auto;
       display: block;
     }
+    .arm-pull-region {
+      cursor: pointer;
+    }
     .mc-bottom-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 240px;
@@ -789,8 +792,6 @@
   </figure>
   <div id="evidence-controls" class="bb-controls l-gutter">
     <aside class="bb-card evidence-controls-card">
-      <p class="arm-pulls-label">Pull an arm</p>
-      <div class="arm-pulls" id="evidence-arm-pulls"></div>
       <div class="actions">
         <button id="evidence-thompson" class="primary" type="button">Draw best arm (Thompson sample)</button>
         <button id="evidence-pull10" type="button">Random pull &times;10</button>
@@ -1795,6 +1796,62 @@
     }
   }
 
+  function addArmPullRegions(root, xScale, innerW, innerH, onPull, classPrefix, opts = {}) {
+    const guideLines = root.append("g")
+      .attr("class", `${classPrefix}-arm-guides`)
+      .selectAll("line")
+      .data(d3.range(K))
+      .enter().append("line")
+      .attr("class", `${classPrefix}-arm-guide`)
+      .attr("x1", d => xScale(d) + xScale.bandwidth() / 2)
+      .attr("x2", d => xScale(d) + xScale.bandwidth() / 2)
+      .attr("y1", innerH)
+      .attr("y2", 0)
+      .attr("stroke", d => ARM_COLORS[d])
+      .attr("stroke-width", 1.5)
+      .attr("opacity", opts.showGuides === false ? 0 : 1);
+
+    const hitLayer = root.append("g").attr("class", `${classPrefix}-hit-layer`);
+
+    function highlightArm(k) {
+      guideLines
+        .attr("stroke-width", (_, i) => i === k ? 5 : 1.5)
+        .attr("opacity", (_, i) => {
+          if (opts.showGuides === false) return 0;
+          return i === k ? 0.98 : 0.62;
+        });
+      if (opts.onHover) opts.onHover(k);
+    }
+
+    function clearArmHighlight() {
+      guideLines
+        .attr("stroke-width", 1.5)
+        .attr("opacity", opts.showGuides === false ? 0 : 1);
+      if (opts.onHoverEnd) opts.onHoverEnd();
+    }
+
+    function raiseHitLayer() {
+      hitLayer.raise();
+    }
+
+    hitLayer.selectAll("rect.arm-pull-region")
+      .data(d3.range(K))
+      .enter().append("rect")
+      .attr("class", `arm-pull-region ${classPrefix}-arm-region`)
+      .attr("x", d => d * innerW / K)
+      .attr("y", 0)
+      .attr("width", innerW / K)
+      .attr("height", innerH)
+      .attr("fill", "#fff")
+      .attr("opacity", 0)
+      .attr("pointer-events", "all")
+      .on("mouseenter", (_, k) => highlightArm(k))
+      .on("mouseleave", clearArmHighlight)
+      .on("click", (_, k) => onPull(k));
+
+    return { guideLines, raiseHitLayer };
+  }
+
   /* ============================================================
      Figure 1 — evidence bucket violin plot
      ============================================================ */
@@ -1837,38 +1894,21 @@
       .attr("stroke", "#999")
       .attr("stroke-dasharray", "4 4");
 
-    root.append("g")
-      .attr("class", "evidence-arm-guides")
-      .selectAll("line")
-      .data(d3.range(K))
-      .enter().append("line")
-      .attr("x1", d => xScale(d) + xScale.bandwidth() / 2)
-      .attr("x2", d => xScale(d) + xScale.bandwidth() / 2)
-      .attr("y1", innerH)
-      .attr("y2", 0)
-      .attr("stroke", d => ARM_COLORS[d])
-      .attr("stroke-width", 1.5)
-      // .attr("stroke-opacity", 0.22);
+    const armPullRegions = addArmPullRegions(
+      root,
+      xScale,
+      innerW,
+      innerH,
+      k => pullArmFromPosteriorDemo(k),
+      "evidence"
+    );
 
     const bucketLayer = root.append("g");
     const lastLayer = root.append("g");
-    const pullsBox = document.getElementById("evidence-arm-pulls");
     const statsEl = document.getElementById("evidence-stats");
     const extraEl = document.getElementById("evidence-stats-extra");
     const perArmEl = document.getElementById("evidence-per-arm");
-
-    for (let k = 0; k < K; k++) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.dataset.arm = k;
-      btn.innerHTML = `
-        <span class="arm-bar" style="background:${ARM_COLORS[k]}"></span>
-        <span class="arm-num">${k + 1}</span>
-        <span class="arm-n" data-evidence-armn="${k}">0</span>`;
-      btn.addEventListener("click", () => pullArmFromPosteriorDemo(k));
-      pullsBox.appendChild(btn);
-    }
-    showArmPullCalloutWhileVisible(pullsBox);
+    armPullRegions.raiseHitLayer();
 
     function bucketize(samples) {
       const counts = Array(bucketCount).fill(0);
@@ -1938,11 +1978,6 @@
         .attr("stroke", "#222")
         .attr("stroke-width", 1.5);
       lastDot.exit().remove();
-
-      for (let k = 0; k < K; k++) {
-        const el = document.querySelector(`[data-evidence-armn="${k}"]`);
-        if (el) el.textContent = `${sharedState.pulls[k].n}`;
-      }
 
       if (statsEl || extraEl || perArmEl) {
         const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
@@ -2485,6 +2520,7 @@
     const bucketStep = (yMax - yMin) / bucketCount;
     const xScale = d3.scaleBand().domain(d3.range(K)).range([0, innerW]).padding(0.35);
     const yScale = d3.scaleLinear().domain([yMin, yMax]).range([innerH, 0]);
+    let hoveredArm = null;
 
     root.append("g")
       .attr("transform", `translate(0,${innerH})`)
@@ -2509,8 +2545,31 @@
       .attr("stroke", "#999")
       .attr("stroke-dasharray", "4 4");
 
+    const armPullRegions = addArmPullRegions(
+      root,
+      xScale,
+      innerW,
+      innerH,
+      k => pullArmFromPosteriorDemo(k),
+      "mc-evidence",
+      {
+        showGuides: false,
+        onHover: k => {
+          hoveredArm = k;
+          root.selectAll("path.ghost-violin")
+            .attr("opacity", (_, i) => i === k ? 0.3 : 0.15);
+        },
+        onHoverEnd: () => {
+          hoveredArm = null;
+          root.selectAll("path.ghost-violin")
+            .attr("opacity", 0.15);
+        }
+      }
+    );
+
     const bucketLayer = root.append("g");
     const lastLayer = root.append("g");
+    armPullRegions.raiseHitLayer();
 
     function bucketize(samples) {
       const counts = Array(bucketCount).fill(0);
@@ -2565,7 +2624,7 @@
           .datum(ys.map((y, j) => ({ y, dens: trueDens[j] })))
           .attr("d", ghostPath)
           .attr("fill", ARM_COLORS[i])
-          .attr("opacity", 0.15)
+          .attr("opacity", i === hoveredArm ? 0.3 : 0.15)
           .attr("stroke", "none");
 
         // Dashed posterior
