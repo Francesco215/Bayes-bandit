@@ -305,44 +305,6 @@
       margin: 4px 0 12px;
       position: relative;
     }
-    .arm-pulls.arm-pulls-callout::after {
-      content: "";
-      position: absolute;
-      inset: -8px;
-      border: 4px solid #ffd400;
-      border-radius: 4px;
-      box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.22);
-      pointer-events: none;
-      animation: armPullCallout 1.6s ease-in-out infinite;
-    }
-    @keyframes armPullCallout {
-      0% {
-        opacity: 0;
-        transform: scale(0.98);
-      }
-      10%,
-      30%,
-      50%,
-      70% {
-        opacity: 1;
-        transform: scale(1);
-      }
-      20%,
-      40%,
-      60% {
-        opacity: 0.18;
-        transform: scale(1.015);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.03);
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .arm-pulls.arm-pulls-callout::after {
-        animation: none;
-      }
-    }
     .arm-pulls button {
       position: relative;
       padding: 8px 4px 6px;
@@ -1742,58 +1704,6 @@
 
   function notify() {
     sharedState.listeners.forEach(fn => fn());
-  }
-
-  function showArmPullCalloutWhileVisible(el) {
-    if (!el) return;
-
-    let hasPulledArm = false;
-    let ticking = false;
-    let observer = null;
-
-    function cleanup() {
-      window.removeEventListener("scroll", scheduleCheck);
-      window.removeEventListener("resize", scheduleCheck);
-      el.removeEventListener("click", disableCallout);
-      if (observer) observer.disconnect();
-    }
-
-    function disableCallout(event) {
-      if (!event.target.closest("button")) return;
-      hasPulledArm = true;
-      cleanup();
-      el.classList.remove("arm-pulls-callout");
-    }
-
-    function setVisible(isVisible) {
-      el.classList.toggle("arm-pulls-callout", isVisible && !hasPulledArm);
-    }
-
-    function checkVisibility() {
-      ticking = false;
-      if (hasPulledArm) return;
-
-      const rect = el.getBoundingClientRect();
-      setVisible(rect.bottom > 0 && rect.top < window.innerHeight);
-    }
-
-    function scheduleCheck() {
-      if (ticking || hasPulledArm) return;
-      ticking = true;
-      window.requestAnimationFrame(checkVisibility);
-    }
-
-    el.addEventListener("click", disableCallout);
-    if ("IntersectionObserver" in window) {
-      observer = new IntersectionObserver(entries => {
-        if (!hasPulledArm) setVisible(entries[0].isIntersecting);
-      });
-      observer.observe(el);
-    } else {
-      window.addEventListener("scroll", scheduleCheck, { passive: true });
-      window.addEventListener("resize", scheduleCheck);
-      scheduleCheck();
-    }
   }
 
   function addArmPullRegions(root, xScale, innerW, innerH, onPull, classPrefix, opts = {}) {
