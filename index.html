@@ -562,9 +562,9 @@
       font-size: 13px;
       color: #4c4f69;
     }
-    .algo-block .algo-keyword { color: var(--arm-3); font-weight: 600; }
-    .algo-block .algo-action { color: var(--arm-5); font-weight: 600; }
-    .algo-block .algo-fn { color: var(--arm-1); font-weight: 600; }
+    .algo-block .algo-keyword { color: var(--arm-3);}
+    .algo-block .algo-action { color: var(--arm-5);}
+    .algo-block .algo-fn { color: var(--arm-1);}
     .algo-block .algo-var { color: #d20f39; }
     .algo-block .algo-op { color: #179299; }
     .algo-block .algo-base { color: #4c4f69; }
@@ -1028,7 +1028,7 @@
     </div>
     <figcaption>
       Figure 4: A Monte Carlo estimator of $\mathbb P(k^\star=k\mid D)$. Each draw samples one $\tilde\mu_k$ per arm and credits whichever
-      arm came out highest. In the strip, the bright dot is the sampled winner during Thompson sampling, or the chosen lever after a manual Figure&nbsp;3 pull.
+      arm came out highest. In the strip, the highlighted draw is the sampled winner during Thompson sampling, or the chosen lever after a manual Figure&nbsp;3 pull.
     </figcaption>
   </figure>
 
@@ -1236,7 +1236,7 @@
     </div>
     <figcaption>
       Figure 6: Average reward over the first 1000 steps as a function of each algorithm's tuned
-      parameter (log-spaced). Each curve sweeps a single hyperparameter; the dot marks each
+      parameter (log-spaced). Each curve sweeps a single hyperparameter; the highlighted point marks each
       algorithm's best setting. UCB peaks at $c=1$, with Bayesian $\beta_0\!=\!2$ a close second.
     </figcaption>
   </figure>
@@ -1814,7 +1814,6 @@
     );
 
     const bucketLayer = root.append("g");
-    const lastLayer = root.append("g");
     const statsEl = document.getElementById("evidence-stats");
     const extraEl = document.getElementById("evidence-stats-extra");
     const perArmEl = document.getElementById("evidence-per-arm");
@@ -1862,6 +1861,9 @@
           // .attr("rx", 2)
         guides.exit().remove();
 
+        const lastBucketIndex = sharedState.lastPull && sharedState.lastPull.arm === i
+          ? Math.max(0, Math.min(bucketCount - 1, Math.floor((sharedState.lastPull.reward - yMin) / bucketStep)))
+          : -1;
         const filled = g.selectAll("rect.bucket-fill").data(buckets);
         filled.enter().append("rect")
           .attr("class", "bucket-fill")
@@ -1872,22 +1874,12 @@
           .attr("height", Math.max(1, yScale(yMin) - yScale(yMin + bucketStep) - 2))
           .attr("rx", 2)
           .attr("fill", ARM_COLORS[i])
-          .attr("opacity", d => d.count > 0 ? 0.78 : 0);
+          .attr("opacity", (d, bucketIndex) => {
+            if (d.count === 0) return 0;
+            return bucketIndex === lastBucketIndex ? 1 : 0.70;
+          });
         filled.exit().remove();
       });
-
-      const last = sharedState.lastPull ? [sharedState.lastPull] : [];
-      const lastDot = lastLayer.selectAll("circle.last-reward").data(last);
-      lastDot.enter().append("circle")
-        .attr("class", "last-reward")
-        .merge(lastDot)
-        .attr("cx", d => xScale(d.arm) + xScale.bandwidth() / 2)
-        .attr("cy", d => yScale(Math.max(yMin, Math.min(yMax, d.reward))))
-        .attr("r", 5)
-        .attr("fill", d => ARM_COLORS[d.arm])
-        .attr("stroke", "#222")
-        .attr("stroke-width", 1.5);
-      lastDot.exit().remove();
 
       if (statsEl || extraEl || perArmEl) {
         const totalN = sharedState.pulls.reduce((acc, p) => acc + p.n, 0);
@@ -2478,7 +2470,6 @@
     );
 
     const bucketLayer = root.append("g");
-    const lastLayer = root.append("g");
     armPullRegions.raiseHitLayer();
 
     function bucketize(samples) {
@@ -2568,6 +2559,9 @@
           .attr("opacity", 0);
         guides.exit().remove();
 
+        const lastBucketIndex = sharedState.lastPull && sharedState.lastPull.arm === i
+          ? Math.max(0, Math.min(bucketCount - 1, Math.floor((sharedState.lastPull.reward - yMin) / bucketStep)))
+          : -1;
         const filled = g.selectAll("rect.bucket-fill").data(buckets);
         filled.enter().append("rect")
           .attr("class", "bucket-fill")
@@ -2578,22 +2572,12 @@
           .attr("height", Math.max(1, yScale(yMin) - yScale(yMin + bucketStep) - 2))
           .attr("rx", 2)
           .attr("fill", ARM_COLORS[i])
-          .attr("opacity", d => d.count > 0 ? 0.78 : 0);
+          .attr("opacity", (d, bucketIndex) => {
+            if (d.count === 0) return 0;
+            return bucketIndex === lastBucketIndex ? 1 : 0.70;
+          });
         filled.exit().remove();
       });
-
-      const last = sharedState.lastPull ? [sharedState.lastPull] : [];
-      const lastDot = lastLayer.selectAll("circle.last-reward").data(last);
-      lastDot.enter().append("circle")
-        .attr("class", "last-reward")
-        .merge(lastDot)
-        .attr("cx", d => xScale(d.arm) + xScale.bandwidth() / 2)
-        .attr("cy", d => yScale(Math.max(yMin, Math.min(yMax, d.reward))))
-        .attr("r", 5)
-        .attr("fill", d => ARM_COLORS[d.arm])
-        .attr("stroke", "#222")
-        .attr("stroke-width", 1.5);
-      lastDot.exit().remove();
     }
 
     sharedState.listeners.push(draw);
