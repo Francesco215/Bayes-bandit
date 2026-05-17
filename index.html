@@ -352,6 +352,34 @@
       margin: 0 0 6px;
       font-weight: 600;
     }
+    .arm-pulls-hint {
+      letter-spacing: 0;
+      text-transform: none;
+      font-weight: 400;
+      color: #8a939b;
+      font-size: 11px;
+    }
+    .post-mini-wrap {
+      margin: 4px 0 12px;
+    }
+    .post-mini-wrap svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+    }
+    .evidence-plot-wrap {
+      position: relative;
+    }
+    .evidence-plot-wrap .click-hint {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      width: 28px !important;
+      height: 28px !important;
+      pointer-events: none;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
+    }
 
     /* Results table */
     table.bb-table {
@@ -743,8 +771,13 @@
     <div class="bb-card">
       <h3>Find the best strategy by hand!</h3>
       <p class="bb-sub">The true reward distributions are hidden at the start. Each pull drops one reward into a bucket; enough evidence makes each arm's empirical violin appear. Try to win as much reward as possible!</p>
-      <div class="bb-plot-wrap">
+      <div class="bb-plot-wrap evidence-plot-wrap">
         <svg id="evidence-svg" viewBox="0 0 1100 480"></svg>
+        <svg class="click-hint" viewBox="-16 -16 32 32" width="56" height="56" aria-hidden="true">
+          <circle fill="none" stroke="#FF6C00" stroke-linecap="round" stroke-width="2" cx="0" cy="0" r="14"></circle>
+          <circle fill="#FF6C00" cx="0" cy="0" r="11"></circle>
+          <path fill="#FFFFFF" d="M-3.2-1.3c0-0.1,0-0.2,0-0.3c0-0.1,0-0.2,0-0.3c-0.6,0-1.2,0-1.8,0c0,0.6,0,1.2,0,1.8 c0.2,0,0.4,0,0.6,0c0-0.4,0-0.8,0-1.2c0,0,0.1,0,0.1,0c0.3,0,0.5,0,0.8,0C-3.4-1.3-3.3-1.3-3.2-1.3c0,0.2,0,0.4,0,0.6 c0.2,0,0.4,0,0.6,0c0,0.2,0,0.4,0,0.6c0.2,0,0.4,0,0.6,0c0,0,0,0,0-0.1c0-1.6,0-3.2,0-4.8c0-0.6,0-1.2,0-1.8c0,0,0,0,0.1,0 c0.3,0,0.7,0,1,0c0.1,0,0.1,0,0.2,0c0-0.2,0-0.4,0-0.6c-0.4,0-0.8,0-1.2,0C-2-7.2-2-7-2-6.8c0,0,0,0-0.1,0c-0.2,0-0.3,0-0.5,0 c0,0,0,0-0.1,0c0,1.8,0,3.6,0,5.5c-0.2,0-0.3,0-0.4,0C-3.1-1.3-3.2-1.3-3.2-1.3z M1.1-3.7C1-3.8,1-3.8,1.1-3.7C1-4,1-4.1,1-4.3 c0,0,0,0,0-0.1c-0.4,0-0.8,0-1.2,0c0-0.8,0-1.6,0-2.4c-0.2,0-0.4,0-0.6,0c0,1.8,0,3.6,0,5.5c0.2,0,0.4,0,0.6,0c0-0.8,0-1.6,0-2.4 c0,0,0.1,0,0.1,0C0.3-3.7,0.6-3.7,1.1-3.7C1-3.7,1-3.7,1.1-3.7C1.1-3.7,1-3.7,1.1-3.7c0,0.8,0,1.6,0,2.3c0,0,0,0.1,0,0.1 c0.2,0,0.4,0,0.6,0c0-0.6,0-1.2,0-1.8c0.4,0,0.8,0,1.2,0c0,0.8,0,1.6,0,2.4c0.2,0,0.4,0,0.6,0c0-0.6,0-1.2,0-1.8c0.2,0,0.4,0,0.6,0 c0,0,0,0,0,0.1c0,0.1,0,0.3,0,0.4c0,0,0,0.1,0,0.1c0.2,0,0.4,0,0.5,0c0,0,0.1,0,0.1,0.1c0,0.2,0,0.5,0,0.7c0,1.1,0,2.3,0,3.4 c0,0,0,0,0,0.1c-0.2,0-0.4,0-0.6,0c0,0,0,0,0,0c0,0.6,0,1.1,0,1.7c0,0,0,0,0,0.1c-0.2,0-0.4,0-0.6,0c0,0.4,0,0.8,0,1.2 c-1.6,0-3.2,0-4.9,0c0-0.4,0-0.8,0-1.2c-0.2,0-0.4,0-0.6,0C-2,3.8-2,3.4-2,3c-0.2,0-0.4,0-0.6,0c0,0.4,0,0.8,0,1.2 c0.2,0,0.4,0,0.6,0C-2,4.8-2,5.4-2,6c2,0,4.1,0,6.1,0c0-0.1,0-0.2,0-0.3c0-0.5,0-0.9,0-1.4c0-0.1,0-0.1,0-0.2c0.2,0,0.4,0,0.5,0 c0.1,0,0.1,0,0.1-0.1c0-0.4,0-0.9,0-1.3c0-0.1,0-0.3,0-0.4c0.1,0,0.2,0,0.3,0c0.1,0,0.2,0,0.3,0c0-1.4,0-2.8,0-4.3 c-0.2,0-0.4,0-0.6,0c0-0.2,0-0.4,0-0.6c-0.2,0-0.4,0-0.6,0c0-0.2,0-0.4,0-0.6c-0.4,0-0.8,0-1.2,0c0-0.2,0-0.4,0-0.6 c-0.1,0-0.2,0-0.3,0c-0.4,0-0.9,0-1.3,0C1.2-3.7,1.1-3.7,1.1-3.7z M-3.2,1.8c0,0.4,0,0.8,0,1.2c0.2,0,0.4,0,0.5,0 c0.1,0,0.1,0,0.1-0.1c0-0.3,0-0.6,0-1c0-0.1,0-0.1,0-0.2C-2.8,1.8-3,1.8-3.2,1.8c0-0.4,0-0.8,0-1.2c-0.2,0-0.4,0-0.6,0 c0-0.2,0-0.4,0-0.6c-0.2,0-0.4,0-0.6,0c0,0.2,0,0.4,0,0.6c0.2,0,0.4,0,0.6,0c0,0,0,0,0,0.1c0,0.1,0,0.3,0,0.4c0,0.2,0,0.5,0,0.7 c0,0,0,0.1,0.1,0.1c0.1,0,0.2,0,0.3,0C-3.4,1.8-3.3,1.8-3.2,1.8z"></path>
+        </svg>
       </div>
     </div>
     <figcaption>
@@ -891,8 +924,10 @@
   </figure>
   <div id="post-controls" class="bb-controls l-gutter">
     <aside class="bb-card" style="width: 250.25px">
-      <p class="arm-pulls-label">Pull an arm</p>
-      <div class="arm-pulls" id="arm-pulls"></div>
+      <p class="arm-pulls-label">Pull an arm <span class="arm-pulls-hint">— click an arm in the chart</span></p>
+      <div class="post-mini-wrap">
+        <svg id="post-mini-svg" viewBox="0 0 260 130"></svg>
+      </div>
       <div class="actions">
         <button id="post-thompson" class="primary" type="button">Draw best arm (Thompson sample)</button>
         <button id="post-pull10" type="button">Random pull &times;10</button>
@@ -1346,7 +1381,7 @@
 
   <h3>Contact</h3>
   <p>
-    Email: <a href="mailto:francesco215@live.it">francesco215@live.it</a> &middot; Discord: <code>sacco215</code> &middot; Code: <a href="https://github.com/Francesco215/Bayes-bandit">github.com/Francesco215/Bayes-bandit</a>
+    Email: <a href="/cdn-cgi/l/email-protection#a9cfdbc8c7caccdacac69b989ce9c5c0dfcc87c0dd"><span class="__cf_email__" data-cfemail="1f796d7e717c7a6c7c702d2e2a5f7376697a31766b">[email&#160;protected]</span></a> &middot; Discord: <code>sacco215</code> &middot; Code: <a href="https://github.com/Francesco215/Bayes-bandit">github.com/Francesco215/Bayes-bandit</a>
   </p>
 
   <h3>Citation</h3>
@@ -1362,7 +1397,7 @@
     }</pre>
 
   <d-bibliography>
-    <script type="text/bibtex">
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/bibtex">
       @article{thompson1933,
         title     = {On the likelihood that one unknown probability exceeds another in view of the evidence of two samples},
         author    = {Thompson, William R.},
@@ -1703,7 +1738,50 @@
   }
 
   function notify() {
+    if (sharedState.suppressNotify) return;
     sharedState.listeners.forEach(fn => fn());
+  }
+
+  /* ---------------- press-and-hold helper ----------------
+   * Click = single action. Press-and-hold = repeat with accelerating rate.
+   * Keyboard activation (Enter/Space) still fires once via the click fallback.
+   */
+  function attachPressAndHold(button, action, opts = {}) {
+    if (!button) return;
+    const minDelay   = opts.minDelay   ?? 45;
+    const startDelay = opts.startDelay ?? 380;
+    const decay      = opts.decay      ?? 0.82;
+    let timer = null;
+    let canceled = false;
+    let suppressClick = false;
+
+    function tick(delay) {
+      if (canceled) return;
+      timer = setTimeout(() => {
+        action();
+        tick(Math.max(minDelay, delay * decay));
+      }, delay);
+    }
+    function start(e) {
+      if (e && e.button !== undefined && e.button !== 0) return; // primary only
+      canceled = false;
+      suppressClick = true;
+      action();
+      tick(startDelay);
+    }
+    function stop() {
+      canceled = true;
+      if (timer !== null) { clearTimeout(timer); timer = null; }
+      setTimeout(() => { suppressClick = false; }, 50);
+    }
+    button.addEventListener("mousedown", start);
+    button.addEventListener("touchstart", e => { e.preventDefault(); start(e); }, { passive: false });
+    ["mouseup", "mouseleave", "touchend", "touchcancel", "blur"].forEach(ev =>
+      button.addEventListener(ev, stop));
+    button.addEventListener("click", e => {
+      if (suppressClick) { e.preventDefault(); return; }
+      action();
+    });
   }
 
   function addArmPullRegions(root, xScale, innerW, innerH, onPull, classPrefix, opts = {}) {
@@ -1744,6 +1822,41 @@
       hitLayer.raise();
     }
 
+    // Press-and-hold mechanic for arm columns: click = single pull;
+    // mousedown = accelerating loop until pointer leaves / button released.
+    const holdMin   = 60;
+    const holdStart = 380;
+    const holdDecay = 0.82;
+    let holdTimer = null;
+    let holdActiveArm = -1;
+    let holdSuppressClick = false;
+
+    function holdTick(k, delay) {
+      if (holdActiveArm !== k) return;
+      holdTimer = setTimeout(() => {
+        if (holdActiveArm !== k) return;
+        onPull(k);
+        holdTick(k, Math.max(holdMin, delay * holdDecay));
+      }, delay);
+    }
+    function startHold(k) {
+      stopHold();
+      holdActiveArm = k;
+      holdSuppressClick = true;
+      onPull(k);
+      holdTick(k, holdStart);
+    }
+    function stopHold() {
+      holdActiveArm = -1;
+      if (holdTimer !== null) { clearTimeout(holdTimer); holdTimer = null; }
+      setTimeout(() => { holdSuppressClick = false; }, 50);
+    }
+    // Stop holds when the pointer is released anywhere on the page,
+    // not just inside the rect (release on the body wouldn't otherwise reach us).
+    window.addEventListener("mouseup", stopHold);
+    window.addEventListener("touchend", stopHold);
+    window.addEventListener("touchcancel", stopHold);
+
     hitLayer.selectAll("rect.arm-pull-region")
       .data(d3.range(K))
       .enter().append("rect")
@@ -1756,8 +1869,23 @@
       .attr("opacity", 0)
       .attr("pointer-events", "all")
       .on("mouseenter", (_, k) => highlightArm(k))
-      .on("mouseleave", clearArmHighlight)
-      .on("click", (_, k) => onPull(k));
+      .on("mouseleave", function (event, k) {
+        clearArmHighlight();
+        if (holdActiveArm === k) stopHold();
+      })
+      .on("mousedown", function (event, k) {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        startHold(k);
+      })
+      .on("touchstart", function (event, k) {
+        event.preventDefault();
+        startHold(k);
+      })
+      .on("click", function (event, k) {
+        if (holdSuppressClick) { event.preventDefault(); return; }
+        onPull(k);
+      });
 
     return { guideLines, raiseHitLayer };
   }
@@ -1912,10 +2040,15 @@
     }
 
     sharedState.listeners.push(draw);
-    document.getElementById("evidence-thompson").addEventListener("click", () => policyStepWithMonteCarloTrace());
-    document.getElementById("evidence-pull10").addEventListener("click", () => {
-      for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K));
-    });
+    attachPressAndHold(
+      document.getElementById("evidence-thompson"),
+      () => policyStepWithMonteCarloTrace()
+    );
+    attachPressAndHold(
+      document.getElementById("evidence-pull10"),
+      () => { for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K)); },
+      { startDelay: 480, minDelay: 90, decay: 0.85 }
+    );
     document.getElementById("evidence-reset").addEventListener("click", () => newWorld());
 
     draw();
@@ -2098,17 +2231,202 @@
     const pullsBox = document.getElementById("arm-pulls");
     const statsEl = document.getElementById("post-stats");
 
-    // Build the 5 arm-pull buttons
-    for (let k = 0; k < K; k++) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.dataset.arm = k;
-      btn.innerHTML = `
-        <span class="arm-bar" style="background:${ARM_COLORS[k]}"></span>
-        <span class="arm-num">${k + 1}</span>
-        <span class="arm-n" data-armn="${k}">0</span>`;
-      btn.addEventListener("click", () => pullArmFromPosteriorDemo(k));
-      pullsBox.appendChild(btn);
+    // ------ Mini evidence figure (replaces the old per-arm buttons) ------
+    // Same idea as Figure 4's evidence violin, but tuned for the small format:
+    // fewer buckets, thicker dashed posterior outline, no axes/labels, click an
+    // arm column to pull that arm.
+    const miniSvg = d3.select("#post-mini-svg");
+    if (!miniSvg.empty()) {
+      const MW = 260, MH = 130;
+      const mMargin = { top: 6, right: 6, bottom: 18, left: 6 };
+      const miniInnerW = MW - mMargin.left - mMargin.right;
+      const miniInnerH = MH - mMargin.top - mMargin.bottom;
+      const miniRoot = miniSvg.append("g")
+        .attr("transform", `translate(${mMargin.left},${mMargin.top})`);
+
+      const miniYMin = -3.5, miniYMax = 3.5;
+      const miniBucketCount = 9; // bucket size ~1.5× smaller than before for finer detail
+      const miniBucketStep = (miniYMax - miniYMin) / miniBucketCount;
+      const miniX = d3.scaleBand().domain(d3.range(K)).range([0, miniInnerW]).padding(0.28);
+      const miniY = d3.scaleLinear().domain([miniYMin, miniYMax]).range([miniInnerH, 0]);
+
+      const miniBucketLayer = miniRoot.append("g");
+      const miniCILayer = miniRoot.append("g");
+      const miniPulseLayer = miniRoot.append("g");
+
+      // Hover-from-big-plot state. When the user hovers over an arm's posterior
+      // curve in the main Figure 3 plot, we dim everything in the mini except
+      // the dashed posterior-predictive lines, and overlay a confidence band
+      // representing the posterior over each arm's true mean.
+      let hoveredPostArm = -1;
+      // Click flash state — bump the ghost violin briefly when an arm is pulled.
+      let flashArm = -1;
+      let flashTimer = null;
+
+      const miniRegions = addArmPullRegions(
+        miniRoot, miniX, miniInnerW, miniInnerH,
+        k => {
+          pullArmFromPosteriorDemo(k);
+          // brief ghost-violin highlight on the column we just pulled
+          flashArm = k;
+          if (flashTimer !== null) clearTimeout(flashTimer);
+          flashTimer = setTimeout(() => { flashArm = -1; drawMini(); flashTimer = null; }, 360);
+          drawMini();
+        },
+        "post-mini",
+        { showGuides: false }
+      );
+
+      function bucketize(samples) {
+        const counts = Array(miniBucketCount).fill(0);
+        samples.forEach(r => {
+          if (r < miniYMin || r > miniYMax) {
+            // clip to the closest bucket so a tail-pull still shows
+            const idx = r < miniYMin ? 0 : miniBucketCount - 1;
+            counts[idx] += 1;
+            return;
+          }
+          const idx = Math.max(0, Math.min(miniBucketCount - 1,
+            Math.floor((r - miniYMin) / miniBucketStep)));
+          counts[idx] += 1;
+        });
+        return counts.map((count, i) => ({
+          count,
+          y0: miniYMin + i * miniBucketStep,
+          y1: miniYMin + (i + 1) * miniBucketStep
+        }));
+      }
+
+      function drawMini() {
+        const hoverActive = hoveredPostArm >= 0;
+        const allBuckets = sharedState.pulls.map(p => bucketize(p.samples));
+        const groups = miniBucketLayer.selectAll("g.mini-arm").data(allBuckets);
+        groups.exit().remove();
+        const merged = groups.enter().append("g")
+          .attr("class", "mini-arm")
+          .merge(groups)
+          .attr("transform", (_, i) => `translate(${miniX(i)},0)`);
+
+        merged.each(function (buckets, i) {
+          const g = d3.select(this);
+          const bw = miniX.bandwidth();
+          const bx = bw / 2;
+          const maxHalf = bw / 2;
+
+          // Ghost ground-truth violin (faint). Briefly brightens on click.
+          // When the user is hovering a posterior curve in the big plot, fade
+          // these out entirely so the dashed predictives dominate.
+          const arm = sharedState.arms[i];
+          const ys = d3.range(48).map(j => miniYMin + ((miniYMax - miniYMin) * j) / 47);
+          const trueDens = ys.map(y => normPdf(y, arm.mu, arm.sigma));
+          const maxTrueDens = Math.max(1e-9, d3.max(trueDens));
+          const ghostArea = d3.area()
+            .x0(d => bx - (d.dens / maxTrueDens) * maxHalf)
+            .x1(d => bx + (d.dens / maxTrueDens) * maxHalf)
+            .y(d => miniY(d.y))
+            .curve(d3.curveBasis);
+          const ghostSel = g.selectAll("path.mini-ghost").data([trueDens]);
+          const isFlashed = flashArm === i;
+          const ghostOpacity = hoverActive ? 0.03 : (isFlashed ? 0.55 : 0.13);
+          ghostSel.enter().insert("path", ":first-child").attr("class", "mini-ghost")
+            .merge(ghostSel)
+            .datum(ys.map((y, j) => ({ y, dens: trueDens[j] })))
+            .attr("d", ghostArea)
+            .attr("fill", ARM_COLORS[i])
+            .attr("stroke", "none")
+            .interrupt()
+            .transition().duration(isFlashed ? 0 : 180)
+              .attr("opacity", ghostOpacity);
+
+          // Dashed posterior-predictive violin. Always visible — gets a small
+          // emphasis bump when the corresponding curve is hovered in the big plot.
+          const pp = posteriorParams(i);
+          const estMu = pp.muN;
+          const estSigma = Math.sqrt(pp.betaN / Math.max(0.01, pp.alphaN - 1));
+          const postDens = ys.map(y => normPdf(y, estMu, estSigma));
+          const maxPostDens = Math.max(1e-9, d3.max(postDens));
+          const postArea = d3.area()
+            .x0(d => bx - (d.dens / maxPostDens) * maxHalf)
+            .x1(d => bx + (d.dens / maxPostDens) * maxHalf)
+            .y(d => miniY(d.y))
+            .curve(d3.curveBasis);
+          const postSel = g.selectAll("path.mini-post").data([postDens]);
+          const postIsFocus = hoverActive && hoveredPostArm === i;
+          postSel.enter().insert("path", "rect.mini-bucket").attr("class", "mini-post")
+            .merge(postSel)
+            .datum(ys.map((y, j) => ({ y, dens: postDens[j] })))
+            .attr("d", postArea)
+            .attr("fill", "none")
+            .attr("stroke", ARM_COLORS[i])
+            .attr("stroke-width", postIsFocus ? 3 : 2.2)
+            .attr("stroke-dasharray", "6 4")
+            .attr("stroke-linecap", "round")
+            .attr("opacity", hoverActive && !postIsFocus ? 0.7 : 1);
+
+          // Empirical buckets — fade out during hover mode.
+          const maxCount = Math.max(1, d3.max(buckets, d => d.count) || 1);
+          const fill = g.selectAll("rect.mini-bucket").data(buckets);
+          const bucketBaseOpacity = hoverActive ? 0.05 : 0.85;
+          fill.enter().append("rect").attr("class", "mini-bucket")
+            .merge(fill)
+            .attr("x", d => bx - (d.count / maxCount) * maxHalf)
+            .attr("y", d => miniY(d.y1) + 0.5)
+            .attr("width", d => (d.count / maxCount) * maxHalf * 2)
+            .attr("height", Math.max(1, miniY(miniYMin) - miniY(miniYMin + miniBucketStep) - 1))
+            .attr("rx", 1.5)
+            .attr("fill", ARM_COLORS[i])
+            .attr("opacity", d => d.count === 0 ? 0 : bucketBaseOpacity);
+          fill.exit().remove();
+        });
+
+        // Confidence-interval bands over the latent mean μₖ. Only drawn when
+        // the user is hovering a posterior curve. Half-width = 1.96·τ (95% CI
+        // for the Student-t posterior over the mean).
+        if (hoverActive) {
+          const ciData = sharedState.arms.map((_, k) => {
+            const pp = posteriorParams(k);
+            const half = 1.96 * pp.tau;
+            return { k, muN: pp.muN, half };
+          });
+          const ciSel = miniCILayer.selectAll("g.mini-ci").data(ciData, d => d.k);
+          ciSel.exit().remove();
+          const ciEnter = ciSel.enter().append("g").attr("class", "mini-ci");
+          ciEnter.append("rect").attr("class", "mini-ci-band");
+          ciEnter.append("line").attr("class", "mini-ci-mean");
+          const ciMerge = ciEnter.merge(ciSel)
+            .attr("transform", d => `translate(${miniX(d.k)},0)`);
+          const bw = miniX.bandwidth();
+          ciMerge.select("rect.mini-ci-band")
+            .attr("x", -bw * 0.08)
+            .attr("y", d => miniY(Math.min(miniYMax, d.muN + d.half)))
+            .attr("width", bw * 1.16)
+            .attr("height", d => Math.max(2,
+              miniY(Math.max(miniYMin, d.muN - d.half)) -
+              miniY(Math.min(miniYMax, d.muN + d.half))))
+            .attr("fill", d => ARM_COLORS[d.k])
+            .attr("opacity", d => d.k === hoveredPostArm ? 0.32 : 0.18)
+            .attr("rx", 2);
+          ciMerge.select("line.mini-ci-mean")
+            .attr("x1", -bw * 0.08).attr("x2", bw * 1.08)
+            .attr("y1", d => miniY(d.muN)).attr("y2", d => miniY(d.muN))
+            .attr("stroke", d => ARM_COLORS[d.k])
+            .attr("stroke-width", d => d.k === hoveredPostArm ? 2 : 1.2)
+            .attr("opacity", d => d.k === hoveredPostArm ? 0.95 : 0.6);
+        } else {
+          miniCILayer.selectAll("*").remove();
+        }
+      }
+
+      // Expose hover setter so the main Fig 3 plot can drive it.
+      window.__setPostHover = (k) => {
+        if (hoveredPostArm === k) return;
+        hoveredPostArm = k;
+        drawMini();
+      };
+
+      miniRegions.raiseHitLayer();
+      sharedState.listeners.push(drawMini);
+      drawMini();
     }
 
     function draw() {
@@ -2161,7 +2479,23 @@
         .merge(fillSel)
         .attr("d", area)
         .attr("fill", (_, i) => ARM_COLORS[i])
-        .attr("opacity", 0.18);
+        .attr("opacity", 0.18)
+        .attr("pointer-events", "all")
+        .style("cursor", "pointer")
+        .on("mouseenter", function () {
+          const idx = allPosts.indexOf(d3.select(this).datum());
+          if (window.__setPostHover) window.__setPostHover(idx);
+          lineSel
+            .attr("stroke-width", (_, j) => j === idx ? 3.4 : 1.4)
+            .attr("opacity", (_, j) => j === idx ? 1 : 0.45);
+          fillSel
+            .attr("opacity", (_, j) => j === idx ? 0.36 : 0.10);
+        })
+        .on("mouseleave", function () {
+          if (window.__setPostHover) window.__setPostHover(-1);
+          lineSel.attr("stroke-width", 2).attr("opacity", 1);
+          fillSel.attr("opacity", 0.18);
+        });
       fillSel.exit().remove();
 
       const lineSel = postLayer.selectAll("path.postline").data(allPosts);
@@ -2170,7 +2504,8 @@
         .attr("d", line)
         .attr("fill", "none")
         .attr("stroke", (_, i) => ARM_COLORS[i])
-        .attr("stroke-width", 2);
+        .attr("stroke-width", 2)
+        .attr("pointer-events", "none");
       lineSel.exit().remove();
 
       // Update n counts on buttons
@@ -2188,10 +2523,15 @@
 
     // Listeners
     sharedState.listeners.push(draw);
-    document.getElementById("post-thompson").addEventListener("click", () => policyStepWithMonteCarloTrace());
-    document.getElementById("post-pull10").addEventListener("click", () => {
-      for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K));
-    });
+    attachPressAndHold(
+      document.getElementById("post-thompson"),
+      () => policyStepWithMonteCarloTrace()
+    );
+    attachPressAndHold(
+      document.getElementById("post-pull10"),
+      () => { for (let i = 0; i < 10; i++) pullArmFromPosteriorDemo(Math.floor(Math.random() * K)); },
+      { startDelay: 480, minDelay: 90, decay: 0.85 }
+    );
     document.getElementById("post-reset").addEventListener("click", () => newWorld());
 
     ["prior-mu", "prior-kappa", "prior-alpha", "prior-beta"].forEach(id => {
@@ -2365,10 +2705,11 @@
         }
       });
     }
-    document.getElementById("mc-step").addEventListener("click", () => {
-      for (let i = 0; i < 50; i++) doDraw();
-      draw();
-    });
+    attachPressAndHold(
+      document.getElementById("mc-step"),
+      () => { for (let i = 0; i < 50; i++) doDraw(); draw(); },
+      { startDelay: 420, minDelay: 110, decay: 0.85 }
+    );
     document.getElementById("mc-reset").addEventListener("click", () => {
       stopStream();
       document.getElementById("post-reset").click();
@@ -2744,6 +3085,29 @@
       readout.textContent = "Hover a curve to see the parameter value and average reward at that point.";
     });
   })();
-})();
 
+  /* ============================================================
+     Initial seed — 20 pulls on first load, alternating random / Thompson
+     so figures don't open empty. Suppress per-pull figure redraws while
+     we batch, then fire one notify at the end.
+     ============================================================ */
+  (function seedInitialPulls() {
+    sharedState.suppressNotify = true;
+    try {
+      const TOTAL = 20;
+      for (let i = 0; i < TOTAL; i++) {
+        if (i % 2 === 0) {
+          // random pull
+          pullArm(Math.floor(Math.random() * K));
+        } else {
+          // Thompson sample → pull the winner (also feeds the MC strip)
+          policyStepWithMonteCarloTrace();
+        }
+      }
+    } finally {
+      sharedState.suppressNotify = false;
+    }
+    notify();
+  })();
+})();
 </script>
